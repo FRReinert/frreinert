@@ -16,9 +16,11 @@ const publicacoes = defineCollection({
   loader: glob({ base: './src/content/publicacoes', pattern: '**/*.{md,mdx}' }),
   schema: z.object({
     title: z.string(),
+    path_slug: z.string().optional(),
     date: z.coerce.date(),
     description: z.string(),
     cover: z.string(),
+    carousel: z.boolean().optional().default(false),
     gallery: z.array(imageItem).optional().default([]),
     videos: z.array(videoItem).optional().default([]),
   }),

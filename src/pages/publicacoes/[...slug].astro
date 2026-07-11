@@ -45,6 +45,10 @@ const { Content } = await render(item);
       <Content />
     </div>
 
-    <PublicationMedia gallery={item.data.gallery} videos={item.data.videos} />
+    <PublicationMedia
+      gallery={item.data.gallery}
+      videos={item.data.videos}
+      carousel={item.data.carousel}
+    />
   </article>
 </Layout>

@@ -19,12 +19,27 @@ collections:
     label: Publicações
     folder: src/content/publicacoes
     create: true
-    slug: "{{slug}}"
+    # path_slug ASCII evita acentos no .md (quebra o watch do Astro em alguns casos)
+    slug: "{{fields.path_slug}}"
     fields:
       - { label: Título, name: title, widget: string }
+      - {
+          label: Slug (URL),
+          name: path_slug,
+          widget: string,
+          hint: "Obrigatório. Só a-z, 0-9 e hífen — ex: sao-joao-de-timbo-2026 (sem acentos).",
+          pattern: ["^[a-z0-9]+(?:-[a-z0-9]+)*$", "Use apenas a-z, 0-9 e hífens (sem acentos)"],
+        }
       - { label: Data, name: date, widget: datetime }
       - { label: Descrição, name: description, widget: text }
       - { label: Capa, name: cover, widget: image }
+      - {
+          label: Carrossel,
+          name: carousel,
+          widget: boolean,
+          default: false,
+          hint: "Mostra a galeria 2 a 2, sem borda, com swipe (colagens).",
+        }
       - label: Galeria
         name: gallery
         widget: list

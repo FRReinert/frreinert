@@ -1,0 +1,12 @@
+name = "frreinert-media"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+
+# https://frreinert-media.fabricio-reinert.workers.dev
+#
+# Serve mídia pública (imagens/áudio) do bucket R2 frreinert-media.
+# Deploy: cd workers/frreinert-media && npm i && npx wrangler deploy
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "frreinert-media"

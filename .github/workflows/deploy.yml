@@ -31,6 +31,8 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          PUBLIC_MEDIA_BASE: https://frreinert-media.fabricio-reinert.workers.dev
         run: npm run build
 
       - name: Upload Pages artifact

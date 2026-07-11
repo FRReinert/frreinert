@@ -1,43 +1,53 @@
-# Astro Starter Kit: Minimal
+# Fabricio Reinert — fotolog (Astro + GitHub Pages + Cloudflare)
+
+Site estático em Astro (`base: /frreinert`), CMS Decap, comércio via Workers + Mercado Pago.
+
+## Desenvolvimento
 
 ```sh
-npm create astro@latest -- --template minimal
+npm install
+npm run cms          # terminal 1 — Decap local (grava no disco)
+npm run dev          # terminal 2 — http://localhost:4321/frreinert/
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Admin local: http://localhost:4321/frreinert/admin/
 
-## 🚀 Project Structure
+Se o content layer ficar desatualizado: `npm run dev:fresh`.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Mídia pesada (R2)
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+Imagens de publicações e áudio ficam no bucket **`frreinert-media`**, servidos pelo Worker **`frreinert-media`**.
+
+1. No CMS, faça upload normalmente (staging em `public/images` e `public/audio`).
+2. Publique/salve o `.md` da publicação.
+3. Sincronize para o R2:
+
+```sh
+npm run sync-media
+# ou: npm run sync-media -- --dry-run
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+4. Em produção o build usa `PUBLIC_MEDIA_BASE` (ver `.env.example` e o workflow de deploy). Localmente, copie:
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```sh
+cp .env.example .env
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+Deploy do Worker (quando o código em `workers/frreinert-media` mudar):
 
-## 🧞 Commands
+```sh
+cd workers/frreinert-media && npm ci && npx wrangler deploy
+```
 
-All commands are run from the root of the project, from a terminal:
+Markdown das publicações permanece no Git; só os binários vão para o R2.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Scripts úteis
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+| Comando | Ação |
+| --- | --- |
+| `npm run dev` | Dev server Astro |
+| `npm run build` | Build estático |
+| `npm run cms` | Proxy Decap local |
+| `npm run sync-media` | Sobe `public/images` + `public/audio` → R2 |
+| `npm run optimize-images` | Otimiza pasta de fotos para upload |
+| `npm run sync-catalog` | Sync catálogo de eventos → API Worker |

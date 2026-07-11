@@ -6,9 +6,27 @@ export function withBase(path = '') {
   return `${base}/${clean}`;
 }
 
-/** Resolve media paths from Decap (`/images/...`) against the site base. */
+const MEDIA_PREFIXES = ['images/', 'audio/'];
+
+function isRemoteMediaPath(path: string): boolean {
+  const p = path.replace(/^\/+/, '');
+  return MEDIA_PREFIXES.some((prefix) => p.startsWith(prefix));
+}
+
+/**
+ * Resolve media paths from Decap (`/images/...`, `/audio/...`).
+ * When PUBLIC_MEDIA_BASE is set (R2 CDN Worker), heavy assets go there;
+ * otherwise fall back to the site base (local/public).
+ */
 export function assetUrl(path: string) {
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+  const mediaBase = (import.meta.env.PUBLIC_MEDIA_BASE as string | undefined)?.replace(/\/+$/, '');
+  if (mediaBase && isRemoteMediaPath(path)) {
+    const clean = path.replace(/^\/+/, '');
+    return `${mediaBase}/${clean}`;
+  }
+
   return withBase(path);
 }
 

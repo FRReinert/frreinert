@@ -31,7 +31,7 @@ Por muitos anos, as festas culturais da região se tornaram mais tradicionais do
 
 Mas, pouco a pouco, o que estava no prato dos antigos imigrantes começa a ser artigo de luxo. Não vemos mais uma polenta na tábua servida com galinha velha no dia a dia do rio-cedrense. Isso você vai encontrar no restaurante, assim como o Spätzle alemão já não faz mais parte do dia a dia do pomerodense. E, aos poucos, as festas acabam sendo um resgate cultural.
 
-Na prática, isso nunca irá mudar. O piauiense que vem para Timbó não achará maniva para venda no mercado e, logo, não irá fazer uma maniçoba com tanta frequência. Ou as variedades de goma com as quais estava acostumado. E, aos poucos, a tradição vira lembrança, vira saudade. Os filhos ou netos desses imigrantes logo não terão mais os costumes de seus pais.
+Na prática, isso nunca irá mudar. O piauiense que vem para Timbó não achará maniva para venda no mercado e, logo, não irá fazer uma maniçoba com tanta frequência. Ou as variedades de goma com as quais estava acostumado. E, aos poucos, a tradição vira lembrança, vira saudade. Os filhos ou netos desses migrantes logo não terão mais os costumes de seus pais.
 
 E assim surgiu, para surpresa de muitos, a festa junina de Timbó. Confesso que eu não esperava por isso. Uma festa com gastronomia e apresentações culturais nortistas, onde pude provar alguns pratos típicos que apenas havia ouvido falar.
 

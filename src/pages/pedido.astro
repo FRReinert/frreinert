@@ -31,6 +31,12 @@ import { withBase } from '../lib/paths';
         ← Voltar aos eventos
       </a>
       <a
+        href={withBase('minhas-fotos/')}
+        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+      >
+        Minhas fotos
+      </a>
+      <a
         href={withBase()}
         class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
       >
@@ -50,6 +56,7 @@ import { withBase } from '../lib/paths';
     title: string;
     unitPrice: number;
     downloadReady?: boolean;
+    downloadUrl?: string | null;
   };
 
   type OrderResponse = {
@@ -57,6 +64,7 @@ import { withBase } from '../lib/paths';
     status: string;
     total: number;
     message?: string;
+    paymentId?: string;
     items: PublicItem[];
   };
 
@@ -81,12 +89,13 @@ import { withBase } from '../lib/paths';
       const res = await fetch(`${CHECKOUT_API_BASE}/api/orders?${query.toString()}`);
       if (res.ok) order = (await res.json()) as OrderResponse;
     } catch {
-      // usa snapshot local
+      // snapshot local
     }
 
     const local = ref ? readLastOrder(ref) : null;
     const items = order?.items?.length ? order.items : local?.items || [];
     const status = order?.status || (urlStatus === 'success' ? 'approved' : urlStatus || 'pending');
+    const pay = order?.paymentId || paymentId;
 
     const labels: Record<string, string> = {
       approved: 'Pagamento confirmado',
@@ -101,7 +110,7 @@ import { withBase } from '../lib/paths';
     messageEl.textContent =
       order?.message ||
       (status === 'approved' || status === 'success'
-        ? 'Obrigado! Em breve você poderá baixar as fotos em alta resolução.'
+        ? 'Obrigado! Use os botões abaixo para baixar as fotos.'
         : 'Se você já pagou, a confirmação pode levar alguns instantes.');
 
     if (status === 'approved' || status === 'success') {
@@ -116,22 +125,32 @@ import { withBase } from '../lib/paths';
     }
 
     listEl.innerHTML = items
-      .map(
-        (item) => `
+      .map((item) => {
+        const ready = Boolean(item.downloadReady || status === 'approved' || status === 'success');
+        let href = item.downloadUrl || '';
+        if (!href && ready && ref) {
+          const q = new URLSearchParams({
+            ref,
+            eventId: item.eventId,
+            photoId: item.photoId,
+          });
+          if (pay) q.set('payment_id', pay);
+          href = `${CHECKOUT_API_BASE}/api/download?${q.toString()}`;
+        }
+
+        const action = href
+          ? `<a href="${href}" class="border border-paper/40 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-paper transition hover:border-paper hover:bg-paper/5">Baixar</a>`
+          : `<span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">${ready ? 'Preparando…' : 'Aguardando'}</span>`;
+
+        return `
       <li class="flex items-start justify-between gap-4 py-4">
         <div>
           <p class="font-display text-lg tracking-wide text-paper">${item.title}</p>
           <p class="mt-1 text-sm text-muted">${formatBRL(item.unitPrice)}</p>
         </div>
-        <span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-          ${
-            item.downloadReady || status === 'approved' || status === 'success'
-              ? 'Liberada em breve'
-              : 'Aguardando'
-          }
-        </span>
-      </li>`,
-      )
+        ${action}
+      </li>`;
+      })
       .join('');
   }
 

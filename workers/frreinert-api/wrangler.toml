@@ -2,14 +2,22 @@ name = "frreinert-api"
 main = "src/index.ts"
 compatibility_date = "2025-07-01"
 
-# URL pública após o deploy:
 # https://frreinert-api.fabricio-reinert.workers.dev
 #
-# Secrets (dashboard ou CLI):
+# Secrets:
 #   npx wrangler secret put MERCADOPAGO_ACCESS_TOKEN
 #   npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
-#
-# Vars não secretas:
+#   npx wrangler secret put RESEND_API_KEY
+
 [vars]
 SITE_URL = "https://frreinert.github.io/frreinert"
-# Em dev local, o front usa localhost; CORS libera ambos.
+FROM_EMAIL = "pedidos@vanguardab2b.com.br"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "frreinert-photos"
+
+[[kv_namespaces]]
+binding = "ORDERS"
+id = "9d158c0d4d3844da956b396e8a4bddf7"
+preview_id = "e79de38647014069a047478a66c55528"

@@ -13,73 +13,86 @@ npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
 (cole a “Assinatura secreta” do painel de Webhooks do MP)
 
 - Preview público deve ser arquivo **já com marca d'água** (CSS não protege)
-- Em repo público, `highresKey` no markdown/catalog é visível — a proteção real é o arquivo privado no Drive
+- Em repo público, `highresKey` no markdown/catalog é visível — a proteção real é o arquivo privado no R2
 
 ## Status
 
 | Etapa | Status |
 |-------|--------|
 | Carrinho + checkout UI | Pronto |
+| E-mail no checkout | Pronto |
 | Worker cria Preference (Checkout Pro) | Pronto |
 | Preço/highres no servidor | Pronto |
-| Retorno para `/pedido/` | Pronto |
-| Webhook + validação de assinatura | Pronto (ative o secret) |
-| Download Google Drive | Próximo |
+| KV ORDERS (pedidos + índice por e-mail) | Pronto |
+| Retorno para `/pedido/` + botão Baixar | Pronto |
+| Webhook + e-mail pós-pagamento (Resend) | Pronto (configure a API key) |
+| Minhas fotos (magic link) | Pronto |
+| Download via R2 | Pronto |
 
-## O que você faz agora no Mercado Pago
+## Fluxo do cliente
 
-1. Painel Developers → sua aplicação → **Webhooks** (ou IPN / notificações)
-2. URL:
+1. Checkout informa **e-mail** → Worker grava pedido em KV + índice `email:{email}`
+2. Paga no Mercado Pago (pode ficar no comprovante sem voltar ao site)
+3. Webhook marca `approved` e envia e-mail com link do pedido + Minhas fotos
+4. Em `/minhas-fotos/` o cliente pede um magic link → confirma em `/minhas-fotos/acesso/` → biblioteca com downloads
+
+## Secrets / vars do Worker
+
+```bash
+cd workers/frreinert-api
+npx wrangler secret put MERCADOPAGO_ACCESS_TOKEN
+npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
+npx wrangler secret put RESEND_API_KEY
+```
+
+No `wrangler.toml`:
+
+- `SITE_URL` — URL pública do site
+- `FROM_EMAIL` — `pedidos@vanguardab2b.com.br` (domínio verificado no Resend)
+
+## Mercado Pago — webhook
+
+URL:
 
 ```text
 https://frreinert-api.fabricio-reinert.workers.dev/api/webhooks/mercadopago
 ```
 
-3. Eventos: pagamentos (`payment`)
+Eventos: pagamentos (`payment`).
 
-## Redeploy do Worker (obrigatório após estas mudanças)
+## Redeploy
+
+```bash
+npm run sync-catalog
+cd workers/frreinert-api && npx wrangler deploy
+```
+
+## KV ORDERS
+
+Já bound no `wrangler.toml`. Chaves:
+
+- `order:{ref}` — pedido (inclui `email`, `emailSentAt`)
+- `email:{email}` — lista de refs
+- `magic:{token}` — TTL 15 min
+- `session:{token}` — TTL 7 dias
+
+## R2 (fotos em alta)
+
+Bucket: **`frreinert-photos`** (privado), binding `PHOTOS`.
 
 ```bash
 cd workers/frreinert-api
-npx wrangler deploy
+npx wrangler r2 object put frreinert-photos/eventos/casamento-ana-pedro/ana-pedro-001.jpg \
+  --file=./caminho/local/foto.jpg \
+  --content-type=image/jpeg \
+  --remote
 ```
 
-## Teste
+Sem `--remote` o Wrangler grava só no R2 local.
 
-1. `npm run dev` na raiz do site  
-2. Comprar no sandbox  
-3. Após pagar, o MP deve voltar para  
-   `https://frreinert.github.io/frreinert/pedido/?ref=...&status=success`  
-   (em produção; localmente o `SITE_URL` do Worker ainda aponta para o GitHub Pages)
+## Teste rápido
 
-### Testar retorno no localhost
-
-No `wrangler.toml`, temporariamente:
-
-```toml
-SITE_URL = "http://localhost:4321/frreinert"
-```
-
-Depois `npx wrangler deploy` de novo. Lembre de voltar para a URL de produção depois.
-
-## KV (opcional, recomendado)
-
-```bash
-npx wrangler kv namespace create ORDERS
-npx wrangler kv namespace create ORDERS --preview
-```
-
-Cole os IDs no `wrangler.toml`:
-
-```toml
-[[kv_namespaces]]
-binding = "ORDERS"
-id = "COLE_O_ID_AQUI"
-preview_id = "COLE_O_PREVIEW_ID_AQUI"
-```
-
-Sem KV o fluxo ainda funciona: o front guarda o resumo do pedido no navegador e o webhook consulta o pagamento na API do MP.
-
-## Próximo: Google Drive
-
-Quando o webhook marcar `approved`, usar Service Account + `highresKey` para gerar link/download da alta.
+1. `npm run dev` + Worker deployado com secrets
+2. Checkout com seu e-mail → pagar no sandbox
+3. Confirmar e-mail de “Pagamento confirmado” (mesmo sem voltar ao site)
+4. Abrir Minhas fotos → magic link → Baixar

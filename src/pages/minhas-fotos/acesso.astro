@@ -1,0 +1,74 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { withBase } from '../../lib/paths';
+---
+
+<Layout
+  title="Acesso | Fabricio Roberto Reinert"
+  description="Confirmando acesso às suas fotos"
+>
+  <header class="mb-10 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Acesso</h1>
+    <p class="mt-4 text-muted" data-acesso-status>Validando seu link…</p>
+  </header>
+
+  <p data-acesso-error class="hidden max-w-md text-sm text-red-300" role="alert"></p>
+  <a
+    href={withBase('minhas-fotos/')}
+    data-acesso-retry
+    class="mt-6 hidden text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+  >
+    Pedir novo link
+  </a>
+</Layout>
+
+<script>
+  import { CHECKOUT_API_BASE } from '../../lib/mercadopago';
+  import { savePhotosSession } from '../../lib/session';
+  import { withBase } from '../../lib/paths';
+
+  async function run() {
+    const statusEl = document.querySelector<HTMLElement>('[data-acesso-status]');
+    const errorEl = document.querySelector<HTMLElement>('[data-acesso-error]');
+    const retryEl = document.querySelector<HTMLElement>('[data-acesso-retry]');
+    if (!statusEl || !errorEl || !retryEl) return;
+
+    const token = new URLSearchParams(window.location.search).get('token') || '';
+    if (!token) {
+      statusEl.textContent = 'Link incompleto.';
+      errorEl.textContent = 'Abra o link completo enviado por e-mail.';
+      errorEl.classList.remove('hidden');
+      retryEl.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${CHECKOUT_API_BASE}/api/auth/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        sessionToken?: string;
+        email?: string;
+        expiresIn?: number;
+        error?: string;
+      };
+
+      if (!res.ok || !data.sessionToken || !data.email) {
+        throw new Error(data.error || 'invalid');
+      }
+
+      savePhotosSession(data.sessionToken, data.email, data.expiresIn || 60 * 60 * 24 * 7);
+      statusEl.textContent = 'Acesso confirmado. Abrindo sua biblioteca…';
+      window.location.replace(withBase('minhas-fotos/biblioteca/'));
+    } catch {
+      statusEl.textContent = 'Não foi possível confirmar o acesso.';
+      errorEl.textContent = 'Este link expirou ou já foi usado. Peça um novo.';
+      errorEl.classList.remove('hidden');
+      retryEl.classList.remove('hidden');
+    }
+  }
+
+  run();
+</script>

@@ -1,5 +1,5 @@
 /**
- * API de checkout (Mercado Pago) + webhook + consulta de pedido.
+ * API de checkout (Mercado Pago) + webhook + auth por e-mail + download.
  * Preços e highresKey vêm do catálogo server-side (não confiar no cliente).
  *
  * Deploy:
@@ -8,12 +8,16 @@
  */
 
 import catalog from './catalog.json';
+import { magicLinkEmail, orderApprovedEmail, sendMail } from './mail';
 
 export interface Env {
   MERCADOPAGO_ACCESS_TOKEN?: string;
   MERCADOPAGO_WEBHOOK_SECRET?: string;
+  RESEND_API_KEY?: string;
+  FROM_EMAIL?: string;
   SITE_URL: string;
-  ORDERS?: KVNamespace;
+  ORDERS: KVNamespace;
+  PHOTOS: R2Bucket;
 }
 
 type CatalogPhoto = {
@@ -31,19 +35,26 @@ type ResolvedItem = {
 };
 
 type CheckoutRequest = {
+  email: string;
   items: Array<{ eventId: string; photoId: string }>;
 };
 
 type StoredOrder = {
   externalReference: string;
   preferenceId?: string;
+  email: string;
   status: 'pending' | 'approved' | 'rejected' | 'in_process';
   items: ResolvedItem[];
   total: number;
   createdAt: string;
   paidAt?: string;
   paymentId?: string;
+  emailSentAt?: string;
 };
+
+type EmailIndex = { refs: string[] };
+type MagicRecord = { email: string; exp: number };
+type SessionRecord = { email: string; exp: number };
 
 const ALLOWED_ORIGINS = [
   'https://frreinert.github.io',
@@ -51,12 +62,18 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:4321',
 ];
 
+const MAGIC_TTL_SEC = 60 * 15;
+const SESSION_TTL_SEC = 60 * 60 * 24 * 7;
+const ORDER_PENDING_TTL = 60 * 60 * 24 * 30;
+const ORDER_PAID_TTL = 60 * 60 * 24 * 90;
+const EMAIL_INDEX_TTL = 60 * 60 * 24 * 365;
+
 function corsHeaders(origin: string | null): HeadersInit {
   const allowed = origin && ALLOWED_ORIGINS.some((o) => origin === o || origin.startsWith(o));
   return {
     'Access-Control-Allow-Origin': allowed && origin ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
   };
 }
@@ -69,6 +86,14 @@ function json(data: unknown, status = 200, origin: string | null = null) {
       ...corsHeaders(origin),
     },
   });
+}
+
+function normalizeEmail(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
 }
 
 function resolveFromCatalog(eventId: string, photoId: string): ResolvedItem | null {
@@ -84,6 +109,25 @@ function resolveFromCatalog(eventId: string, photoId: string): ResolvedItem | nu
     unitPrice: photo.price,
     highresKey: photo.highresKey || undefined,
   };
+}
+
+function randomToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function appendEmailIndex(env: Env, email: string, ref: string) {
+  const key = `email:${email}`;
+  const raw = await env.ORDERS.get(key);
+  const index: EmailIndex = raw ? (JSON.parse(raw) as EmailIndex) : { refs: [] };
+  if (!index.refs.includes(ref)) index.refs.push(ref);
+  await env.ORDERS.put(key, JSON.stringify(index), { expirationTtl: EMAIL_INDEX_TTL });
+}
+
+async function saveOrder(env: Env, order: StoredOrder, ttl = ORDER_PENDING_TTL) {
+  await env.ORDERS.put(`order:${order.externalReference}`, JSON.stringify(order), {
+    expirationTtl: ttl,
+  });
 }
 
 export default {
@@ -104,10 +148,16 @@ export default {
             'POST /api/checkout',
             'POST /api/webhooks/mercadopago',
             'GET /api/orders?ref=...|payment_id=...',
+            'GET /api/download?ref=...&eventId=...&photoId=...&payment_id=...|session=...',
+            'POST /api/auth/magic-link',
+            'POST /api/auth/session',
+            'GET /api/my-orders',
           ],
           mercadopagoConfigured: Boolean(env.MERCADOPAGO_ACCESS_TOKEN),
           webhookSecretConfigured: Boolean(env.MERCADOPAGO_WEBHOOK_SECRET),
+          resendConfigured: Boolean(env.RESEND_API_KEY),
           ordersKv: Boolean(env.ORDERS),
+          r2: Boolean(env.PHOTOS),
         },
         200,
         origin,
@@ -126,11 +176,30 @@ export default {
       return handleOrderLookup(request, env, origin);
     }
 
+    if (url.pathname === '/api/download' && request.method === 'GET') {
+      return handleDownload(request, env, origin);
+    }
+
+    if (url.pathname === '/api/auth/magic-link' && request.method === 'POST') {
+      return handleMagicLink(request, env, origin);
+    }
+
+    if (url.pathname === '/api/auth/session' && request.method === 'POST') {
+      return handleCreateSession(request, env, origin);
+    }
+
+    if (url.pathname === '/api/my-orders' && request.method === 'GET') {
+      return handleMyOrders(request, env, origin);
+    }
+
     return json({ error: 'Not found' }, 404, origin);
   },
 };
 
 async function handleCheckout(request: Request, env: Env, origin: string | null) {
+  if (!env.ORDERS) {
+    return json({ error: 'Persistência de pedidos indisponível.' }, 501, origin);
+  }
   if (!env.MERCADOPAGO_ACCESS_TOKEN) {
     return json({ error: 'Pagamento temporariamente indisponível.' }, 501, origin);
   }
@@ -140,6 +209,11 @@ async function handleCheckout(request: Request, env: Env, origin: string | null)
     body = (await request.json()) as CheckoutRequest;
   } catch {
     return json({ error: 'JSON inválido' }, 400, origin);
+  }
+
+  const email = normalizeEmail(body?.email || '');
+  if (!isValidEmail(email)) {
+    return json({ error: 'Informe um e-mail válido.' }, 400, origin);
   }
 
   if (!body?.items?.length) {
@@ -179,17 +253,15 @@ async function handleCheckout(request: Request, env: Env, origin: string | null)
 
   const order: StoredOrder = {
     externalReference,
+    email,
     status: 'pending',
     items: resolved,
     total,
     createdAt: new Date().toISOString(),
   };
 
-  if (env.ORDERS) {
-    await env.ORDERS.put(`order:${externalReference}`, JSON.stringify(order), {
-      expirationTtl: 60 * 60 * 24 * 30,
-    });
-  }
+  await saveOrder(env, order, ORDER_PENDING_TTL);
+  await appendEmailIndex(env, email, externalReference);
 
   const preference = {
     items: resolved.map((item) => ({
@@ -199,17 +271,16 @@ async function handleCheckout(request: Request, env: Env, origin: string | null)
       currency_id: 'BRL',
       unit_price: item.unitPrice,
     })),
+    payer: { email },
     external_reference: externalReference,
     metadata: {
       external_reference: externalReference,
+      email,
       items: resolved.map((i) => ({
         eventId: i.eventId,
         photoId: i.photoId,
         title: i.title,
         unitPrice: i.unitPrice,
-        // highresKey fica só no pedido server-side / KV — não espelhar no MP se possível
-        // (metadata do MP pode ser lida via API com o token; ainda assim não vai ao browser)
-        highresKey: i.highresKey ?? null,
       })),
     },
     back_urls: {
@@ -251,12 +322,8 @@ async function handleCheckout(request: Request, env: Env, origin: string | null)
     return json({ error: 'Preference criada sem init_point' }, 502, origin);
   }
 
-  if (env.ORDERS) {
-    order.preferenceId = mpData.id;
-    await env.ORDERS.put(`order:${externalReference}`, JSON.stringify(order), {
-      expirationTtl: 60 * 60 * 24 * 30,
-    });
-  }
+  order.preferenceId = mpData.id;
+  await saveOrder(env, order, ORDER_PENDING_TTL);
 
   return json(
     {
@@ -327,12 +394,37 @@ async function handleWebhook(request: Request, env: Env) {
         status: order?.status,
         ref: order?.externalReference,
       });
+      if (order?.status === 'approved') {
+        await maybeSendOrderEmail(env, order);
+      }
     }
   } catch (err) {
     console.error('webhook sync failed', err);
   }
 
   return new Response('ok', { status: 200 });
+}
+
+async function maybeSendOrderEmail(env: Env, order: StoredOrder) {
+  if (!order.email) return;
+
+  const freshRaw = await env.ORDERS.get(`order:${order.externalReference}`);
+  if (freshRaw) {
+    const fresh = JSON.parse(freshRaw) as StoredOrder;
+    if (fresh.emailSentAt) {
+      order.emailSentAt = fresh.emailSentAt;
+      return;
+    }
+    if (fresh.email) order.email = fresh.email;
+  } else if (order.emailSentAt) {
+    return;
+  }
+
+  const sent = await sendMail(env, orderApprovedEmail(env, order.email, order.externalReference));
+  if (!sent) return;
+
+  order.emailSentAt = new Date().toISOString();
+  await saveOrder(env, order, ORDER_PAID_TTL);
 }
 
 async function verifyMercadoPagoSignature(
@@ -407,21 +499,25 @@ async function handleOrderLookup(request: Request, env: Env, origin: string | nu
   const url = new URL(request.url);
   const ref = url.searchParams.get('ref') || '';
   const paymentId = url.searchParams.get('payment_id') || url.searchParams.get('collection_id') || '';
+  const workerOrigin = url.origin;
 
   if (paymentId) {
     try {
       const order = await syncPaymentToOrder(env, paymentId);
-      if (order) return json(publicOrder(order), 200, origin);
+      if (order) {
+        if (order.status === 'approved') await maybeSendOrderEmail(env, order);
+        return json(publicOrder(order, workerOrigin, paymentId), 200, origin);
+      }
     } catch (err) {
       console.error('lookup by payment failed', err);
     }
   }
 
-  if (ref && env.ORDERS) {
+  if (ref) {
     const raw = await env.ORDERS.get(`order:${ref}`);
     if (raw) {
       const order = JSON.parse(raw) as StoredOrder;
-      return json(publicOrder(order), 200, origin);
+      return json(publicOrder(order, workerOrigin, order.paymentId || paymentId), 200, origin);
     }
   }
 
@@ -442,6 +538,207 @@ async function handleOrderLookup(request: Request, env: Env, origin: string | nu
   return json({ error: 'Informe ref ou payment_id' }, 400, origin);
 }
 
+async function readSession(
+  env: Env,
+  request: Request,
+  url: URL,
+): Promise<SessionRecord | null> {
+  const auth = request.headers.get('Authorization') || '';
+  const bearer = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  const token = bearer || url.searchParams.get('session') || '';
+  if (!token) return null;
+
+  const raw = await env.ORDERS.get(`session:${token}`);
+  if (!raw) return null;
+  const session = JSON.parse(raw) as SessionRecord;
+  if (!session.email || session.exp < Date.now()) return null;
+  return session;
+}
+
+async function handleDownload(request: Request, env: Env, origin: string | null) {
+  if (!env.PHOTOS) {
+    return json({ error: 'Storage indisponível' }, 501, origin);
+  }
+
+  const url = new URL(request.url);
+  const ref = url.searchParams.get('ref') || '';
+  const eventId = url.searchParams.get('eventId') || '';
+  const photoId = url.searchParams.get('photoId') || '';
+  const paymentId = url.searchParams.get('payment_id') || url.searchParams.get('collection_id') || '';
+  const session = await readSession(env, request, url);
+
+  if (!eventId || !photoId || (!ref && !paymentId && !session)) {
+    return json({ error: 'Parâmetros inválidos' }, 400, origin);
+  }
+
+  let order: StoredOrder | null = null;
+
+  if (paymentId) {
+    order = await syncPaymentToOrder(env, paymentId);
+  }
+  if (!order && ref) {
+    const raw = await env.ORDERS.get(`order:${ref}`);
+    if (raw) order = JSON.parse(raw) as StoredOrder;
+  }
+
+  if (!order || order.status !== 'approved') {
+    return json({ error: 'Download indisponível para este pedido.' }, 403, origin);
+  }
+
+  if (ref && order.externalReference !== ref) {
+    return json({ error: 'Pedido não confere.' }, 403, origin);
+  }
+
+  if (session) {
+    if (normalizeEmail(order.email) !== normalizeEmail(session.email)) {
+      return json({ error: 'Sessão não autorizada para este pedido.' }, 403, origin);
+    }
+  } else if (!paymentId && !ref) {
+    return json({ error: 'Não autorizado' }, 403, origin);
+  }
+
+  const purchased = order.items.some((i) => i.eventId === eventId && i.photoId === photoId);
+  if (!purchased) {
+    return json({ error: 'Esta foto não faz parte do pedido.' }, 403, origin);
+  }
+
+  const catalogItem = resolveFromCatalog(eventId, photoId);
+  const key = catalogItem?.highresKey;
+  if (!key) {
+    return json({ error: 'Arquivo não configurado.' }, 404, origin);
+  }
+
+  const object = await env.PHOTOS.get(key);
+  if (!object) {
+    console.error('R2 object missing', key);
+    return json({ error: 'Arquivo ainda não disponível no storage.' }, 404, origin);
+  }
+
+  const filename = key.split('/').pop() || `${photoId}.jpg`;
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+  headers.set('Cache-Control', 'private, no-store');
+  Object.entries(corsHeaders(origin)).forEach(([k, v]) => headers.set(k, String(v)));
+
+  return new Response(object.body, { status: 200, headers });
+}
+
+async function handleMagicLink(request: Request, env: Env, origin: string | null) {
+  let body: { email?: string };
+  try {
+    body = (await request.json()) as { email?: string };
+  } catch {
+    return json({ error: 'JSON inválido' }, 400, origin);
+  }
+
+  const email = normalizeEmail(body?.email || '');
+  // Resposta genérica sempre (não revelar se existe)
+  const okResponse = json(
+    { ok: true, message: 'Se houver compras neste e-mail, enviamos um link de acesso.' },
+    200,
+    origin,
+  );
+
+  if (!isValidEmail(email)) {
+    return okResponse;
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const rateKey = `rate:magic:${email}:${ip}`;
+  const rateRaw = await env.ORDERS.get(rateKey);
+  if (rateRaw) {
+    return okResponse;
+  }
+  await env.ORDERS.put(rateKey, '1', { expirationTtl: 60 });
+
+  const indexRaw = await env.ORDERS.get(`email:${email}`);
+  if (!indexRaw) {
+    return okResponse;
+  }
+
+  const token = randomToken();
+  const record: MagicRecord = { email, exp: Date.now() + MAGIC_TTL_SEC * 1000 };
+  await env.ORDERS.put(`magic:${token}`, JSON.stringify(record), {
+    expirationTtl: MAGIC_TTL_SEC,
+  });
+
+  await sendMail(env, magicLinkEmail(env, email, token));
+  return okResponse;
+}
+
+async function handleCreateSession(request: Request, env: Env, origin: string | null) {
+  let body: { token?: string };
+  try {
+    body = (await request.json()) as { token?: string };
+  } catch {
+    return json({ error: 'JSON inválido' }, 400, origin);
+  }
+
+  const token = (body?.token || '').trim();
+  if (!token) {
+    return json({ error: 'Token inválido' }, 400, origin);
+  }
+
+  const raw = await env.ORDERS.get(`magic:${token}`);
+  if (!raw) {
+    return json({ error: 'Link expirado ou inválido.' }, 401, origin);
+  }
+
+  const magic = JSON.parse(raw) as MagicRecord;
+  await env.ORDERS.delete(`magic:${token}`);
+
+  if (!magic.email || magic.exp < Date.now()) {
+    return json({ error: 'Link expirado ou inválido.' }, 401, origin);
+  }
+
+  const sessionToken = randomToken();
+  const session: SessionRecord = {
+    email: magic.email,
+    exp: Date.now() + SESSION_TTL_SEC * 1000,
+  };
+  await env.ORDERS.put(`session:${sessionToken}`, JSON.stringify(session), {
+    expirationTtl: SESSION_TTL_SEC,
+  });
+
+  return json({ sessionToken, email: magic.email, expiresIn: SESSION_TTL_SEC }, 200, origin);
+}
+
+async function handleMyOrders(request: Request, env: Env, origin: string | null) {
+  const url = new URL(request.url);
+  const session = await readSession(env, request, url);
+  if (!session) {
+    return json({ error: 'Sessão inválida ou expirada.' }, 401, origin);
+  }
+
+  const indexRaw = await env.ORDERS.get(`email:${session.email}`);
+  const refs: string[] = indexRaw ? (JSON.parse(indexRaw) as EmailIndex).refs : [];
+  const workerOrigin = url.origin;
+  const sessionToken =
+    (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim() ||
+    url.searchParams.get('session') ||
+    '';
+
+  const orders = [];
+  for (const ref of refs) {
+    const raw = await env.ORDERS.get(`order:${ref}`);
+    if (!raw) continue;
+    const order = JSON.parse(raw) as StoredOrder;
+    if (order.status !== 'approved') continue;
+    if (normalizeEmail(order.email) !== normalizeEmail(session.email)) continue;
+    orders.push(publicOrder(order, workerOrigin, order.paymentId || '', sessionToken));
+  }
+
+  orders.sort((a, b) => {
+    const da = a.paidAt || '';
+    const db = b.paidAt || '';
+    return db.localeCompare(da);
+  });
+
+  return json({ email: session.email, orders }, 200, origin);
+}
+
 async function syncPaymentToOrder(env: Env, paymentId: string): Promise<StoredOrder | null> {
   const token = env.MERCADOPAGO_ACCESS_TOKEN;
   if (!token) return null;
@@ -459,13 +756,14 @@ async function syncPaymentToOrder(env: Env, paymentId: string): Promise<StoredOr
     status: string;
     external_reference?: string;
     transaction_amount?: number;
+    payer?: { email?: string };
     metadata?: {
+      email?: string;
       items?: Array<{
         eventId: string;
         photoId: string;
         title?: string;
         unitPrice?: number;
-        highresKey?: string | null;
       }>;
       external_reference?: string;
     };
@@ -477,7 +775,6 @@ async function syncPaymentToOrder(env: Env, paymentId: string): Promise<StoredOr
 
   const mappedStatus = mapMpStatus(payment.status);
 
-  // Re-resolve do catálogo (fonte da verdade), não confiar só no metadata
   let items: ResolvedItem[] = [];
   if (Array.isArray(payment.metadata?.items)) {
     for (const meta of payment.metadata!.items) {
@@ -487,37 +784,40 @@ async function syncPaymentToOrder(env: Env, paymentId: string): Promise<StoredOr
   }
 
   let order: StoredOrder | null = null;
-  if (env.ORDERS) {
-    const raw = await env.ORDERS.get(`order:${externalReference}`);
-    if (raw) order = JSON.parse(raw) as StoredOrder;
-  }
+  const raw = await env.ORDERS.get(`order:${externalReference}`);
+  if (raw) order = JSON.parse(raw) as StoredOrder;
+
+  const emailFromPayment =
+    normalizeEmail(payment.metadata?.email || payment.payer?.email || '') || '';
 
   if (!order) {
+    if (!emailFromPayment || !items.length) {
+      console.error('order missing in KV and incomplete payment metadata', externalReference);
+      return null;
+    }
     order = {
       externalReference,
+      email: emailFromPayment,
       status: mappedStatus,
       items,
       total: items.reduce((s, i) => s + i.unitPrice, 0) || payment.transaction_amount || 0,
       createdAt: new Date().toISOString(),
     };
+    await appendEmailIndex(env, order.email, externalReference);
   }
 
   order.status = mappedStatus;
   order.paymentId = String(payment.id);
+  if (emailFromPayment && !order.email) order.email = emailFromPayment;
   if (items.length) {
     order.items = items;
     order.total = items.reduce((s, i) => s + i.unitPrice, 0);
   }
   if (mappedStatus === 'approved') {
-    order.paidAt = new Date().toISOString();
+    order.paidAt = order.paidAt || new Date().toISOString();
   }
 
-  if (env.ORDERS) {
-    await env.ORDERS.put(`order:${externalReference}`, JSON.stringify(order), {
-      expirationTtl: 60 * 60 * 24 * 90,
-    });
-  }
-
+  await saveOrder(env, order, mappedStatus === 'approved' ? ORDER_PAID_TTL : ORDER_PENDING_TTL);
   return order;
 }
 
@@ -530,27 +830,52 @@ function mapMpStatus(status: string): StoredOrder['status'] {
   return 'pending';
 }
 
-function publicOrder(order: StoredOrder) {
+function publicOrder(
+  order: StoredOrder,
+  workerOrigin: string,
+  paymentId = '',
+  sessionToken = '',
+) {
+  const approved = order.status === 'approved';
+  const pay = paymentId || order.paymentId || '';
+
   return {
     externalReference: order.externalReference,
     status: order.status,
     total: order.total,
     paidAt: order.paidAt,
-    items: order.items.map((item) => ({
-      eventId: item.eventId,
-      photoId: item.photoId,
-      title: item.title,
-      unitPrice: item.unitPrice,
-      downloadReady: order.status === 'approved',
-    })),
-    message: statusMessage(order.status),
+    paymentId: pay || undefined,
+    items: order.items.map((item) => {
+      const ready =
+        approved &&
+        Boolean(item.highresKey || resolveFromCatalog(item.eventId, item.photoId)?.highresKey);
+      const params = new URLSearchParams({
+        ref: order.externalReference,
+        eventId: item.eventId,
+        photoId: item.photoId,
+      });
+      if (pay) params.set('payment_id', pay);
+      if (sessionToken) params.set('session', sessionToken);
+
+      return {
+        eventId: item.eventId,
+        photoId: item.photoId,
+        title: item.title,
+        unitPrice: item.unitPrice,
+        downloadReady: ready,
+        downloadUrl: ready ? `${workerOrigin}/api/download?${params.toString()}` : null,
+      };
+    }),
+    message: statusMessage(order.status, approved),
   };
 }
 
-function statusMessage(status: StoredOrder['status']) {
+function statusMessage(status: StoredOrder['status'], approved = false) {
   switch (status) {
     case 'approved':
-      return 'Pagamento confirmado. Suas fotos em alta resolução serão liberadas em breve.';
+      return approved
+        ? 'Pagamento confirmado. Baixe suas fotos em alta resolução abaixo.'
+        : 'Pagamento confirmado.';
     case 'rejected':
       return 'O pagamento não foi aprovado. Você pode tentar novamente.';
     case 'in_process':

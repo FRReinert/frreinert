@@ -1,0 +1,129 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { withBase } from '../../lib/paths';
+---
+
+<Layout
+  title="Biblioteca | Fabricio Roberto Reinert"
+  description="Suas fotos compradas"
+>
+  <header class="mb-10 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Biblioteca</h1>
+    <p class="mt-4 text-muted" data-bib-lead>Carregando suas compras…</p>
+  </header>
+
+  <div data-bib-body class="max-w-xl space-y-10">
+    <p data-bib-error class="hidden text-sm text-red-300" role="alert"></p>
+    <div data-bib-orders class="space-y-10"></div>
+
+    <div class="flex flex-wrap gap-4">
+      <button
+        type="button"
+        data-bib-logout
+        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+      >
+        Sair
+      </button>
+      <a
+        href={withBase('eventos/')}
+        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+      >
+        Ver eventos
+      </a>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { formatBRL } from '../../lib/cart';
+  import { CHECKOUT_API_BASE } from '../../lib/mercadopago';
+  import { clearPhotosSession, readPhotosSession } from '../../lib/session';
+  import { withBase } from '../../lib/paths';
+
+  type PublicItem = {
+    title: string;
+    unitPrice: number;
+    downloadUrl?: string | null;
+    downloadReady?: boolean;
+  };
+
+  type PublicOrder = {
+    externalReference: string;
+    total: number;
+    paidAt?: string;
+    items: PublicItem[];
+  };
+
+  async function load() {
+    const lead = document.querySelector<HTMLElement>('[data-bib-lead]');
+    const errorEl = document.querySelector<HTMLElement>('[data-bib-error]');
+    const list = document.querySelector<HTMLElement>('[data-bib-orders]');
+    if (!lead || !errorEl || !list) return;
+
+    const session = readPhotosSession();
+    if (!session) {
+      window.location.replace(withBase('minhas-fotos/'));
+      return;
+    }
+
+    lead.textContent = `Compras de ${session.email}`;
+
+    try {
+      const res = await fetch(`${CHECKOUT_API_BASE}/api/my-orders`, {
+        headers: { Authorization: `Bearer ${session.token}` },
+      });
+      if (res.status === 401) {
+        clearPhotosSession();
+        window.location.replace(withBase('minhas-fotos/'));
+        return;
+      }
+      if (!res.ok) throw new Error('fail');
+
+      const data = (await res.json()) as { orders: PublicOrder[] };
+      if (!data.orders?.length) {
+        list.innerHTML =
+          '<p class="text-sm text-muted">Nenhuma compra aprovada encontrada para este e-mail.</p>';
+        return;
+      }
+
+      list.innerHTML = data.orders
+        .map((order) => {
+          const date = order.paidAt
+            ? new Date(order.paidAt).toLocaleDateString('pt-BR')
+            : 'Pedido';
+          const items = order.items
+            .map((item) => {
+              const action = item.downloadUrl
+                ? `<a href="${item.downloadUrl}" class="border border-paper/40 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-paper transition hover:border-paper hover:bg-paper/5">Baixar</a>`
+                : `<span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Preparando…</span>`;
+              return `
+                <li class="flex items-start justify-between gap-4 py-4">
+                  <div>
+                    <p class="font-display text-lg tracking-wide text-paper">${item.title}</p>
+                    <p class="mt-1 text-sm text-muted">${formatBRL(item.unitPrice)}</p>
+                  </div>
+                  ${action}
+                </li>`;
+            })
+            .join('');
+
+          return `
+            <section>
+              <p class="text-xs uppercase tracking-[0.2em] text-muted">${date} · ${formatBRL(order.total)}</p>
+              <ul class="mt-3 divide-y divide-line/80 border-y border-line/80">${items}</ul>
+            </section>`;
+        })
+        .join('');
+    } catch {
+      errorEl.textContent = 'Não foi possível carregar suas fotos. Tente novamente.';
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  document.querySelector('[data-bib-logout]')?.addEventListener('click', () => {
+    clearPhotosSession();
+    window.location.href = withBase('minhas-fotos/');
+  });
+
+  load();
+</script>

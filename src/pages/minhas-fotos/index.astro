@@ -1,0 +1,97 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { withBase } from '../../lib/paths';
+---
+
+<Layout
+  title="Minhas fotos | Fabricio Roberto Reinert"
+  description="Acesse as fotos que você comprou"
+>
+  <header class="mb-10 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Minhas fotos</h1>
+    <p class="mt-4 text-muted">
+      Informe o e-mail usado na compra. Enviamos um link de acesso — sem senha.
+    </p>
+  </header>
+
+  <form data-magic-form class="max-w-md space-y-6">
+    <label class="block space-y-2">
+      <span class="text-xs uppercase tracking-[0.2em] text-muted">E-mail da compra</span>
+      <input
+        type="email"
+        name="email"
+        required
+        autocomplete="email"
+        placeholder="seu@email.com"
+        data-magic-email
+        class="w-full border border-line/80 bg-transparent px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/60 focus:border-paper/50"
+      />
+    </label>
+
+    <p data-magic-message class="hidden text-sm text-muted" role="status"></p>
+    <p data-magic-error class="hidden text-sm text-red-300" role="alert"></p>
+
+    <button
+      type="submit"
+      data-magic-submit
+      class="border border-paper/40 px-6 py-3 text-xs uppercase tracking-[0.28em] text-paper transition hover:border-paper hover:bg-paper/5 disabled:opacity-50"
+    >
+      Enviar link de acesso
+    </button>
+  </form>
+
+  <p class="mt-10 max-w-md text-sm text-muted">
+    Já tem uma sessão aberta?
+    <a href={withBase('minhas-fotos/biblioteca/')} class="text-paper underline-offset-4 hover:underline">
+      Ir para a biblioteca
+    </a>
+  </p>
+</Layout>
+
+<script>
+  import { CHECKOUT_API_BASE } from '../../lib/mercadopago';
+  import { readPhotosSession } from '../../lib/session';
+  import { withBase } from '../../lib/paths';
+
+  if (readPhotosSession()) {
+    window.location.replace(withBase('minhas-fotos/biblioteca/'));
+  }
+
+  const form = document.querySelector<HTMLFormElement>('[data-magic-form]');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const emailInput = document.querySelector<HTMLInputElement>('[data-magic-email]');
+    const submit = document.querySelector<HTMLButtonElement>('[data-magic-submit]');
+    const messageEl = document.querySelector<HTMLElement>('[data-magic-message]');
+    const errorEl = document.querySelector<HTMLElement>('[data-magic-error]');
+    if (!emailInput || !submit || !messageEl || !errorEl) return;
+
+    const email = emailInput.value.trim();
+    if (!email || !emailInput.checkValidity()) {
+      emailInput.reportValidity();
+      return;
+    }
+
+    submit.disabled = true;
+    errorEl.classList.add('hidden');
+    messageEl.classList.add('hidden');
+
+    try {
+      const res = await fetch(`${CHECKOUT_API_BASE}/api/auth/magic-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error('fail');
+      const data = (await res.json()) as { message?: string };
+      messageEl.textContent =
+        data.message || 'Se houver compras neste e-mail, enviamos um link de acesso.';
+      messageEl.classList.remove('hidden');
+    } catch {
+      errorEl.textContent = 'Não foi possível enviar o link. Tente novamente em instantes.';
+      errorEl.classList.remove('hidden');
+    } finally {
+      submit.disabled = false;
+    }
+  });
+</script>

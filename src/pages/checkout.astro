@@ -7,8 +7,8 @@ import { withBase } from '../lib/paths';
   <header class="mb-10 max-w-2xl">
     <h1 class="font-display text-4xl tracking-wide md:text-5xl">Checkout</h1>
     <p class="mt-4 text-muted">
-      Confira o pedido e finalize o pagamento. Depois da confirmação, você recebe as fotos em alta
-      resolução, sem marca d&apos;água.
+      Informe seu e-mail para receber o link das fotos após o pagamento. Depois finalize no Mercado
+      Pago.
     </p>
   </header>
 
@@ -29,6 +29,22 @@ import { withBase } from '../lib/paths';
         <span data-checkout-count>0</span> foto(s) — <span data-checkout-total>R$&nbsp;0,00</span>
       </p>
     </div>
+
+    <label class="block space-y-2">
+      <span class="text-xs uppercase tracking-[0.2em] text-muted">E-mail</span>
+      <input
+        type="email"
+        name="email"
+        data-checkout-email
+        required
+        autocomplete="email"
+        placeholder="seu@email.com"
+        class="w-full border border-line/80 bg-transparent px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/60 focus:border-paper/50"
+      />
+      <span class="block text-sm text-muted">
+        Usamos este e-mail para enviar o link de download e o acesso a Minhas fotos.
+      </span>
+    </label>
 
     <div class="border border-line/80 px-5 py-4 text-sm leading-relaxed text-muted">
       Você será direcionado ao Mercado Pago para pagar com Pix, cartão ou saldo. O processo é
@@ -68,6 +84,9 @@ import { withBase } from '../lib/paths';
 
   function friendlyError(message: string) {
     const lower = message.toLowerCase();
+    if (lower.includes('e-mail') || lower.includes('email')) {
+      return 'Informe um e-mail válido para continuar.';
+    }
     if (lower.includes('token') || lower.includes('501') || lower.includes('configured')) {
       return 'O pagamento está temporariamente indisponível. Tente de novo em instantes.';
     }
@@ -103,12 +122,22 @@ import { withBase } from '../lib/paths';
   document.querySelector('[data-checkout-pay]')?.addEventListener('click', async () => {
     const button = document.querySelector<HTMLButtonElement>('[data-checkout-pay]');
     const errorEl = document.querySelector<HTMLElement>('[data-checkout-error]');
-    if (!button || !errorEl) return;
+    const emailInput = document.querySelector<HTMLInputElement>('[data-checkout-email]');
+    if (!button || !errorEl || !emailInput) return;
 
     const items = readCart();
     if (items.length === 0) return;
 
+    const email = emailInput.value.trim();
+    if (!email || !emailInput.checkValidity()) {
+      emailInput.reportValidity();
+      errorEl.textContent = 'Informe um e-mail válido para continuar.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
     const payload: CheckoutPayload = {
+      email,
       items: items.map((item) => ({
         eventId: item.eventId,
         photoId: item.photoId,

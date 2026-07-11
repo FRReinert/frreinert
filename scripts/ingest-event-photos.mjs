@@ -118,51 +118,106 @@ function photoCode(eventId, index) {
 }
 
 function watermarkSvg(width, height) {
-  const brandSize = Math.max(16, Math.round(Math.min(width, height) * 0.038));
-  const tagSize = Math.max(11, Math.round(Math.min(width, height) * 0.028));
-  const brandY = Math.round(height * 0.92);
+  const min = Math.min(width, height);
+  const brandSize = Math.max(10, Math.round(min * 0.02));
+  const tagSize = Math.max(10, Math.round(min * 0.024));
+  const sideSize = Math.max(10, Math.round(min * 0.022));
+  const cornerSize = Math.max(10, Math.round(min * 0.02));
+  const brandY = Math.round(height * 0.94);
+  const gridStep = Math.max(48, Math.round(min * 0.11));
+  const pillW = Math.max(22, Math.round(min * 0.045));
+  const pillH = Math.max(120, Math.round(height * 0.28));
+  const pillY = Math.round((height - pillH) / 2);
+  const pillR = Math.round(pillW / 2);
 
-  // Grade de PREVIEW em vários pontos (leve, legível mas não ofuscante)
-  const cols = 3;
-  const rows = 4;
+  // Linhas diagonais tracejadas (grade)
+  const lines = [];
+  const diagSpan = width + height;
+  for (let i = -diagSpan; i < diagSpan; i += gridStep) {
+    lines.push(
+      `<line class="grid" x1="${i}" y1="0" x2="${i + height}" y2="${height}" />`,
+    );
+    lines.push(
+      `<line class="grid" x1="${i}" y1="${height}" x2="${i + height}" y2="0" />`,
+    );
+  }
+
+  // Textos repetidos na grade (estilo da referência)
   const tags = [];
+  const cols = 3;
+  const rows = 5;
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const x = Math.round(((col + 0.5) / cols) * width);
-      const y = Math.round(((row + 0.35) / rows) * height * 0.82);
-      const rot = row % 2 === 0 ? -18 : 18;
+      const y = Math.round(((row + 0.45) / rows) * height * 0.88);
       tags.push(
-        `<text class="tag" text-anchor="middle" transform="translate(${x},${y}) rotate(${rot})">PREVIEW</text>`,
+        `<text class="tag" text-anchor="middle" x="${x}" y="${y}">#proibido reprodução</text>`,
       );
     }
   }
+
+  const leftPillX = Math.round(width * 0.08);
+  const rightPillX = Math.round(width * 0.92) - pillW;
+  const sideTextX = (px) => Math.round(px + pillW / 2);
+  const sideTextY = Math.round(pillY + pillH / 2);
 
   return Buffer.from(`
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <style>
+          .grid {
+            stroke: rgba(255,255,255,0.28);
+            stroke-width: 1;
+            stroke-dasharray: 5 7;
+            fill: none;
+          }
           .tag {
-            fill: rgba(255,255,255,0.14);
+            fill: rgba(255,255,255,0.34);
             font-family: Arial, Helvetica, sans-serif;
             font-size: ${tagSize}px;
-            letter-spacing: 0.22em;
+            font-weight: 500;
+          }
+          .pill {
+            fill: rgba(0, 170, 210, 0.72);
+          }
+          .side {
+            fill: rgba(255,255,255,0.92);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: ${sideSize}px;
             font-weight: 600;
+            letter-spacing: 0.06em;
+          }
+          .corner {
+            fill: rgba(255,255,255,0.4);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: ${cornerSize}px;
+            font-weight: 500;
           }
           .brand-shadow {
-            fill: rgba(0,0,0,0.28);
+            fill: rgba(0,0,0,0.4);
             font-family: Georgia, 'Times New Roman', serif;
             font-size: ${brandSize}px;
-            font-weight: 600;
+            font-weight: 500;
           }
           .brand {
-            fill: rgba(255,255,255,0.4);
+            fill: rgba(255,255,255,0.5);
             font-family: Georgia, 'Times New Roman', serif;
             font-size: ${brandSize}px;
-            font-weight: 600;
+            font-weight: 500;
           }
         </style>
       </defs>
+
+      ${lines.join('\n      ')}
       ${tags.join('\n      ')}
+
+      <rect class="pill" x="${leftPillX}" y="${pillY}" width="${pillW}" height="${pillH}" rx="${pillR}" ry="${pillR}" />
+      <rect class="pill" x="${rightPillX}" y="${pillY}" width="${pillW}" height="${pillH}" rx="${pillR}" ry="${pillR}" />
+      <text class="side" text-anchor="middle" transform="translate(${sideTextX(leftPillX)},${sideTextY}) rotate(-90)">para uso exclusivo</text>
+      <text class="side" text-anchor="middle" transform="translate(${sideTextX(rightPillX)},${sideTextY}) rotate(-90)">para uso exclusivo</text>
+
+      <text class="corner" text-anchor="end" transform="translate(${Math.round(width * 0.92)},${Math.round(height * 0.9)}) rotate(-45)">valorize o fotógrafo</text>
+
       <text class="brand-shadow" text-anchor="middle" x="${width / 2 + 1}" y="${brandY + 1}">Fabricio Reinert</text>
       <text class="brand" text-anchor="middle" x="${width / 2}" y="${brandY}">Fabricio Reinert</text>
     </svg>

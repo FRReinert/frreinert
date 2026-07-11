@@ -2,12 +2,9 @@ backend:
   name: github
   repo: FRReinert/frreinert
   branch: main
-  # GitHub Pages não hospeda OAuth. Preencha com a URL do seu gateway
-  # (ex.: Netlify Identity proxy, ou um deploy de
-  # https://github.com/vencax/netlify-cms-github-oauth-provider).
-  # Depois de subir o gateway, descomente as duas linhas abaixo:
-  # base_url: https://SEU-GATEWAY-OAUTH
-  # auth_endpoint: auth
+  # OAuth próprio (Cloudflare Worker) — GitHub Pages não usa api.netlify.com
+  base_url: https://frreinert-decap-oauth.fabricio-reinert.workers.dev
+  auth_endpoint: auth
 
 media_folder: public/images/uploads
 public_folder: /images/uploads

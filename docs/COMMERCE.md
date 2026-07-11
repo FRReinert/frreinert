@@ -1,6 +1,25 @@
 # Comércio de fotos + Mercado Pago + Cloudflare
 
-## Segurança (obrigatório)
+## Decap CMS (admin)
+
+O login **não** usa Netlify. Há um Worker OAuth em `workers/frreinert-decap-oauth`.
+
+1. Crie um [GitHub OAuth App](https://github.com/settings/applications/new):
+   - Homepage: `https://frreinert.github.io/frreinert/`
+   - Callback: `https://frreinert-decap-oauth.fabricio-reinert.workers.dev/callback`
+2. Deploy + secrets:
+
+```bash
+cd workers/frreinert-decap-oauth
+npm install
+npx wrangler deploy
+npx wrangler secret put GITHUB_CLIENT_ID
+npx wrangler secret put GITHUB_CLIENT_SECRET
+```
+
+3. Publique o site (para o `config.yml` com `base_url` ir ao ar).
+4. Abra `/admin/` e faça login com GitHub.
+
 
 - Preço e `highresKey` são resolvidos no **Worker** via `catalog.json` (não confiar no browser)
 - Após editar eventos no CMS: `node scripts/sync-catalog.mjs` e `npx wrangler deploy`

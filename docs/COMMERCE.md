@@ -80,6 +80,10 @@ https://frreinert-api.fabricio-reinert.workers.dev/api/webhooks/mercadopago
 
 Eventos: pagamentos (`payment`).
 
+**Obrigatório:** `MERCADOPAGO_WEBHOOK_SECRET` configurado. Requests sem `x-signature` válida são rejeitados (401).
+
+Downloads de alta resolução exigem sessão de **Minhas fotos** (magic link) ou token de download de curta duração — `ref`/`payment_id` sozinhos não bastam.
+
 ## Redeploy
 
 ```bash

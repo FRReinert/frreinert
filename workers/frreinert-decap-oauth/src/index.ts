@@ -16,14 +16,75 @@ export interface Env {
   GITHUB_CLIENT_SECRET: string;
 }
 
+const ALLOWED_POSTMESSAGE_ORIGINS = [
+  'https://frreinert.github.io',
+  'http://localhost:4321',
+  'http://127.0.0.1:4321',
+];
+
+const STATE_TTL_MS = 10 * 60 * 1000;
+
 function html(body: string) {
   return new Response(body, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function bytesToHex(buf: ArrayBuffer) {
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function hmacHex(secret: string, message: string) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
+  return bytesToHex(sig);
+}
+
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
+async function createOAuthState(secret: string) {
+  const nonce = crypto.randomUUID();
+  const exp = String(Date.now() + STATE_TTL_MS);
+  const payload = `${nonce}.${exp}`;
+  const sig = await hmacHex(secret, payload);
+  return `${payload}.${sig}`;
+}
+
+async function verifyOAuthState(secret: string, state: string | null) {
+  if (!state) return false;
+  const parts = state.split('.');
+  if (parts.length !== 3) return false;
+  const [nonce, exp, sig] = parts;
+  if (!nonce || !exp || !sig) return false;
+  const expMs = Number(exp);
+  if (!Number.isFinite(expMs) || expMs < Date.now()) return false;
+  const expected = await hmacHex(secret, `${nonce}.${exp}`);
+  return timingSafeEqual(expected, sig);
+}
+
 function authSuccessPage(token: string) {
   const tokenJson = JSON.stringify(token);
+  const originsJson = JSON.stringify(ALLOWED_POSTMESSAGE_ORIGINS);
   return html(`<!doctype html>
 <html lang="pt-BR">
   <head><meta charset="utf-8" /><title>Autorizando…</title></head>
@@ -32,7 +93,9 @@ function authSuccessPage(token: string) {
     <script>
       (function () {
         var token = ${tokenJson};
+        var allowed = ${originsJson};
         function receiveMessage(message) {
+          if (!message.origin || allowed.indexOf(message.origin) === -1) return;
           window.opener.postMessage(
             'authorization:github:success:' + JSON.stringify({ token: token }),
             message.origin
@@ -40,7 +103,9 @@ function authSuccessPage(token: string) {
           window.removeEventListener('message', receiveMessage, false);
         }
         window.addEventListener('message', receiveMessage, false);
-        window.opener.postMessage('authorizing:github', '*');
+        allowed.forEach(function (origin) {
+          try { window.opener.postMessage('authorizing:github', origin); } catch (e) {}
+        });
       })();
     </script>
   </body>
@@ -48,16 +113,24 @@ function authSuccessPage(token: string) {
 }
 
 function authErrorPage(message: string) {
+  const safe = escapeHtml(message);
+  const messageJson = JSON.stringify(message);
+  const originsJson = JSON.stringify(ALLOWED_POSTMESSAGE_ORIGINS);
   return html(`<!doctype html>
 <html lang="pt-BR">
   <head><meta charset="utf-8" /><title>Erro</title></head>
   <body>
-    <p>Falha na autenticação: ${message}</p>
+    <p>Falha na autenticação: ${safe}</p>
     <script>
-      window.opener && window.opener.postMessage(
-        'authorization:github:error:${JSON.stringify({ message })}',
-        '*'
-      );
+      (function () {
+        var allowed = ${originsJson};
+        var payload = 'authorization:github:error:' + JSON.stringify({ message: ${messageJson} });
+        if (window.opener) {
+          allowed.forEach(function (origin) {
+            try { window.opener.postMessage(payload, origin); } catch (e) {}
+          });
+        }
+      })();
     </script>
   </body>
 </html>`);
@@ -83,16 +156,17 @@ export default {
       if (provider !== 'github') {
         return new Response('Provider inválido', { status: 400 });
       }
-      if (!env.GITHUB_CLIENT_ID) {
-        return new Response('GITHUB_CLIENT_ID não configurado', { status: 501 });
+      if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+        return new Response('OAuth não configurado', { status: 501 });
       }
 
       const redirectUri = `${url.origin}/callback`;
+      const state = await createOAuthState(env.GITHUB_CLIENT_SECRET);
       const authorize = new URL('https://github.com/login/oauth/authorize');
       authorize.searchParams.set('client_id', env.GITHUB_CLIENT_ID);
       authorize.searchParams.set('redirect_uri', redirectUri);
       authorize.searchParams.set('scope', 'public_repo,user');
-      authorize.searchParams.set('state', crypto.randomUUID());
+      authorize.searchParams.set('state', state);
 
       return Response.redirect(authorize.toString(), 302);
     }
@@ -100,11 +174,16 @@ export default {
     if (url.pathname === '/callback') {
       const code = url.searchParams.get('code');
       const error = url.searchParams.get('error');
+      const state = url.searchParams.get('state');
+
       if (error) return authErrorPage(error);
-      if (!code) return authErrorPage('código ausente');
       if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
         return authErrorPage('credenciais OAuth não configuradas');
       }
+      if (!(await verifyOAuthState(env.GITHUB_CLIENT_SECRET, state))) {
+        return authErrorPage('state inválido ou expirado');
+      }
+      if (!code) return authErrorPage('código ausente');
 
       const redirectUri = `${url.origin}/callback`;
       const tokenRes = await fetch('https://github.com/login/oauth/access_token', {

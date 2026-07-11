@@ -60,6 +60,13 @@ type MagicRecord = { email: string; exp: number };
 type SessionRecord = { email: string; exp: number };
 type OtpRecord = { code: string; exp: number; attempts: number };
 type EmailProofRecord = { email: string; exp: number };
+type DownloadGrant = {
+  email: string;
+  ref: string;
+  eventId: string;
+  photoId: string;
+  exp: number;
+};
 
 const ALLOWED_ORIGINS = [
   'https://frreinert.github.io',
@@ -74,16 +81,24 @@ const ORDER_PAID_TTL = 60 * 60 * 24 * 90;
 const EMAIL_INDEX_TTL = 60 * 60 * 24 * 365;
 const OTP_TTL_SEC = 60 * 10;
 const EMAIL_PROOF_TTL_SEC = 60 * 30;
+const DOWNLOAD_TOKEN_TTL_SEC = 60 * 15;
 const OTP_MAX_ATTEMPTS = 5;
+const RATE_ORDERS_LIMIT = 30;
+const RATE_DOWNLOAD_LIMIT = 60;
+const RATE_WINDOW_SEC = 60;
 
 function corsHeaders(origin: string | null): HeadersInit {
-  const allowed = origin && ALLOWED_ORIGINS.some((o) => origin === o || origin.startsWith(o));
-  return {
-    'Access-Control-Allow-Origin': allowed && origin ? origin : ALLOWED_ORIGINS[0],
+  const allowed = Boolean(origin && ALLOWED_ORIGINS.includes(origin));
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
   };
+  if (allowed && origin) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+  return headers;
 }
 
 function json(data: unknown, status = 200, origin: string | null = null) {
@@ -125,6 +140,49 @@ function randomToken(): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
+function clientIp(request: Request) {
+  return request.headers.get('CF-Connecting-IP') || 'unknown';
+}
+
+/** Returns true when the caller should be rate-limited. */
+async function isRateLimited(
+  env: Env,
+  bucket: string,
+  limit: number,
+  windowSec = RATE_WINDOW_SEC,
+): Promise<boolean> {
+  const key = `rate:${bucket}`;
+  const raw = await env.ORDERS.get(key);
+  const count = raw ? Number.parseInt(raw, 10) || 0 : 0;
+  if (count >= limit) return true;
+  await env.ORDERS.put(key, String(count + 1), { expirationTtl: windowSec });
+  return false;
+}
+
+async function mintDownloadToken(env: Env, grant: Omit<DownloadGrant, 'exp'>): Promise<string> {
+  const token = randomToken();
+  const record: DownloadGrant = {
+    ...grant,
+    exp: Date.now() + DOWNLOAD_TOKEN_TTL_SEC * 1000,
+  };
+  await env.ORDERS.put(`dl:${token}`, JSON.stringify(record), {
+    expirationTtl: DOWNLOAD_TOKEN_TTL_SEC,
+  });
+  return token;
+}
+
+function safeFilename(name: string) {
+  const base = name.replace(/[^\w.\-]+/g, '_').replace(/^\.+/, '') || 'foto.jpg';
+  return base.slice(0, 120);
+}
+
 async function appendEmailIndex(env: Env, email: string, ref: string) {
   const key = `email:${email}`;
   const raw = await env.ORDERS.get(key);
@@ -157,7 +215,7 @@ export default {
             'POST /api/checkout',
             'POST /api/webhooks/mercadopago',
             'GET /api/orders?ref=...|payment_id=...',
-            'GET /api/download?ref=...&eventId=...&photoId=...&payment_id=...|session=...',
+            'GET /api/download?token=...|Authorization+eventId+photoId',
             'POST /api/auth/email-otp',
             'POST /api/auth/email-otp/confirm',
             'POST /api/auth/magic-link',
@@ -351,7 +409,7 @@ async function handleCheckout(request: Request, env: Env, origin: string | null)
     );
   }
 
-  const initPoint = mpData.sandbox_init_point || mpData.init_point;
+  const initPoint = mpData.init_point || mpData.sandbox_init_point;
   if (!initPoint) {
     return json({ error: 'Preference criada sem init_point' }, 502, origin);
   }
@@ -376,23 +434,25 @@ async function handleWebhook(request: Request, env: Env) {
   const raw = await request.text();
   const query = Object.fromEntries(url.searchParams);
 
-  if (env.MERCADOPAGO_WEBHOOK_SECRET) {
-    const xSignature = request.headers.get('x-signature');
-    if (xSignature) {
-      const valid = await verifyMercadoPagoSignature(
-        request,
-        raw,
-        env.MERCADOPAGO_WEBHOOK_SECRET,
-      );
-      if (!valid) {
-        console.error('webhook signature invalid');
-        return new Response('invalid signature', { status: 401 });
-      }
-    } else {
-      console.warn('webhook sem header x-signature (notificação legada?)');
-    }
-  } else {
-    console.warn('MERCADOPAGO_WEBHOOK_SECRET não configurado — assinatura não validada');
+  if (!env.MERCADOPAGO_WEBHOOK_SECRET) {
+    console.error('MERCADOPAGO_WEBHOOK_SECRET não configurado');
+    return new Response('webhook secret required', { status: 501 });
+  }
+
+  const xSignature = request.headers.get('x-signature');
+  if (!xSignature) {
+    console.error('webhook sem header x-signature');
+    return new Response('signature required', { status: 401 });
+  }
+
+  const valid = await verifyMercadoPagoSignature(
+    request,
+    raw,
+    env.MERCADOPAGO_WEBHOOK_SECRET,
+  );
+  if (!valid) {
+    console.error('webhook signature invalid');
+    return new Response('invalid signature', { status: 401 });
   }
 
   let topic = (url.searchParams.get('topic') || url.searchParams.get('type') || '').toLowerCase();
@@ -497,13 +557,6 @@ async function verifyMercadoPagoSignature(
   return timingSafeEqual(calculated, hash);
 }
 
-function timingSafeEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let out = 0;
-  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return out === 0;
-}
-
 async function resolvePaymentIds(env: Env, topic: string, resourceId: string): Promise<string[]> {
   const token = env.MERCADOPAGO_ACCESS_TOKEN!;
 
@@ -531,17 +584,21 @@ async function handleOrderLookup(request: Request, env: Env, origin: string | nu
     return json({ error: 'Indisponível' }, 501, origin);
   }
 
+  if (await isRateLimited(env, `orders:${clientIp(request)}`, RATE_ORDERS_LIMIT)) {
+    return json({ error: 'Muitas consultas. Tente novamente em instantes.' }, 429, origin);
+  }
+
   const url = new URL(request.url);
   const ref = url.searchParams.get('ref') || '';
   const paymentId = url.searchParams.get('payment_id') || url.searchParams.get('collection_id') || '';
   const workerOrigin = url.origin;
+  const session = await readSession(env, request);
 
   if (paymentId) {
     try {
       const order = await syncPaymentToOrder(env, paymentId);
       if (order) {
-        if (order.status === 'approved') await maybeSendOrderEmail(env, order);
-        return json(publicOrder(order, workerOrigin, paymentId), 200, origin);
+        return json(await publicOrder(env, order, workerOrigin, session), 200, origin);
       }
     } catch (err) {
       console.error('lookup by payment failed', err);
@@ -552,7 +609,7 @@ async function handleOrderLookup(request: Request, env: Env, origin: string | nu
     const raw = await env.ORDERS.get(`order:${ref}`);
     if (raw) {
       const order = JSON.parse(raw) as StoredOrder;
-      return json(publicOrder(order, workerOrigin, order.paymentId || paymentId), 200, origin);
+      return json(await publicOrder(env, order, workerOrigin, session), 200, origin);
     }
   }
 
@@ -573,17 +630,12 @@ async function handleOrderLookup(request: Request, env: Env, origin: string | nu
   return json({ error: 'Informe ref ou payment_id' }, 400, origin);
 }
 
-async function readSession(
-  env: Env,
-  request: Request,
-  url: URL,
-): Promise<SessionRecord | null> {
+async function readSession(env: Env, request: Request): Promise<SessionRecord | null> {
   const auth = request.headers.get('Authorization') || '';
   const bearer = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
-  const token = bearer || url.searchParams.get('session') || '';
-  if (!token) return null;
+  if (!bearer) return null;
 
-  const raw = await env.ORDERS.get(`session:${token}`);
+  const raw = await env.ORDERS.get(`session:${bearer}`);
   if (!raw) return null;
   const session = JSON.parse(raw) as SessionRecord;
   if (!session.email || session.exp < Date.now()) return null;
@@ -595,49 +647,81 @@ async function handleDownload(request: Request, env: Env, origin: string | null)
     return json({ error: 'Storage indisponível' }, 501, origin);
   }
 
+  if (await isRateLimited(env, `download:${clientIp(request)}`, RATE_DOWNLOAD_LIMIT)) {
+    return json({ error: 'Muitos downloads. Tente novamente em instantes.' }, 429, origin);
+  }
+
   const url = new URL(request.url);
-  const ref = url.searchParams.get('ref') || '';
+  const downloadToken = (url.searchParams.get('token') || '').trim();
   const eventId = url.searchParams.get('eventId') || '';
   const photoId = url.searchParams.get('photoId') || '';
-  const paymentId = url.searchParams.get('payment_id') || url.searchParams.get('collection_id') || '';
-  const session = await readSession(env, request, url);
-
-  if (!eventId || !photoId || (!ref && !paymentId && !session)) {
-    return json({ error: 'Parâmetros inválidos' }, 400, origin);
-  }
+  const ref = url.searchParams.get('ref') || '';
+  const session = await readSession(env, request);
 
   let order: StoredOrder | null = null;
+  let grantEventId = eventId;
+  let grantPhotoId = photoId;
 
-  if (paymentId) {
-    order = await syncPaymentToOrder(env, paymentId);
-  }
-  if (!order && ref) {
-    const raw = await env.ORDERS.get(`order:${ref}`);
-    if (raw) order = JSON.parse(raw) as StoredOrder;
+  if (downloadToken) {
+    const rawGrant = await env.ORDERS.get(`dl:${downloadToken}`);
+    if (!rawGrant) {
+      return json({ error: 'Link de download expirado ou inválido.' }, 401, origin);
+    }
+    const grant = JSON.parse(rawGrant) as DownloadGrant;
+    if (!grant.email || grant.exp < Date.now()) {
+      await env.ORDERS.delete(`dl:${downloadToken}`);
+      return json({ error: 'Link de download expirado ou inválido.' }, 401, origin);
+    }
+
+    const orderRaw = await env.ORDERS.get(`order:${grant.ref}`);
+    if (!orderRaw) {
+      return json({ error: 'Pedido não encontrado.' }, 404, origin);
+    }
+    order = JSON.parse(orderRaw) as StoredOrder;
+    if (normalizeEmail(order.email) !== normalizeEmail(grant.email)) {
+      return json({ error: 'Não autorizado' }, 403, origin);
+    }
+    grantEventId = grant.eventId;
+    grantPhotoId = grant.photoId;
+  } else if (session && eventId && photoId) {
+    if (ref) {
+      const raw = await env.ORDERS.get(`order:${ref}`);
+      if (raw) order = JSON.parse(raw) as StoredOrder;
+    } else {
+      const indexRaw = await env.ORDERS.get(`email:${session.email}`);
+      const refs: string[] = indexRaw ? (JSON.parse(indexRaw) as EmailIndex).refs : [];
+      for (const orderRef of refs) {
+        const raw = await env.ORDERS.get(`order:${orderRef}`);
+        if (!raw) continue;
+        const candidate = JSON.parse(raw) as StoredOrder;
+        if (
+          candidate.status === 'approved' &&
+          normalizeEmail(candidate.email) === normalizeEmail(session.email) &&
+          candidate.items.some((i) => i.eventId === eventId && i.photoId === photoId)
+        ) {
+          order = candidate;
+          break;
+        }
+      }
+    }
+
+    if (!order || normalizeEmail(order.email) !== normalizeEmail(session.email)) {
+      return json({ error: 'Sessão não autorizada para este pedido.' }, 403, origin);
+    }
+  } else {
+    return json({ error: 'Não autorizado. Use Minhas fotos ou um link de download válido.' }, 401, origin);
   }
 
   if (!order || order.status !== 'approved') {
     return json({ error: 'Download indisponível para este pedido.' }, 403, origin);
   }
 
-  if (ref && order.externalReference !== ref) {
-    return json({ error: 'Pedido não confere.' }, 403, origin);
-  }
-
-  if (session) {
-    if (normalizeEmail(order.email) !== normalizeEmail(session.email)) {
-      return json({ error: 'Sessão não autorizada para este pedido.' }, 403, origin);
-    }
-  } else if (!paymentId && !ref) {
-    return json({ error: 'Não autorizado' }, 403, origin);
-  }
-
-  const purchased = order.items.some((i) => i.eventId === eventId && i.photoId === photoId);
+  const purchased = order.items.some((i) => i.eventId === grantEventId && i.photoId === grantPhotoId);
   if (!purchased) {
     return json({ error: 'Esta foto não faz parte do pedido.' }, 403, origin);
   }
 
-  const catalogItem = resolveFromCatalog(eventId, photoId);
+  const catalogItem = resolveFromCatalog(grantEventId, grantPhotoId);
   const key = catalogItem?.highresKey;
   if (!key) {
     return json({ error: 'Arquivo não configurado.' }, 404, origin);
@@ -649,7 +733,7 @@ async function handleDownload(request: Request, env: Env, origin: string | null)
     return json({ error: 'Arquivo ainda não disponível no storage.' }, 404, origin);
   }
 
-  const filename = key.split('/').pop() || `${photoId}.jpg`;
+  const filename = safeFilename(key.split('/').pop() || `${grantPhotoId}.jpg`);
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set('etag', object.httpEtag);
@@ -737,7 +821,7 @@ async function handleEmailOtpConfirm(request: Request, env: Env, origin: string 
     return json({ error: 'Muitas tentativas. Solicite um novo código.' }, 429, origin);
   }
 
-  if (otp.code !== code) {
+  if (!timingSafeEqual(otp.code, code)) {
     otp.attempts += 1;
     await env.ORDERS.put(`otp:${email}`, JSON.stringify(otp), {
       expirationTtl: Math.max(60, Math.ceil((otp.exp - Date.now()) / 1000)),
@@ -840,19 +924,14 @@ async function handleCreateSession(request: Request, env: Env, origin: string | 
 }
 
 async function handleMyOrders(request: Request, env: Env, origin: string | null) {
-  const url = new URL(request.url);
-  const session = await readSession(env, request, url);
+  const session = await readSession(env, request);
   if (!session) {
     return json({ error: 'Sessão inválida ou expirada.' }, 401, origin);
   }
 
   const indexRaw = await env.ORDERS.get(`email:${session.email}`);
   const refs: string[] = indexRaw ? (JSON.parse(indexRaw) as EmailIndex).refs : [];
-  const workerOrigin = url.origin;
-  const sessionToken =
-    (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim() ||
-    url.searchParams.get('session') ||
-    '';
+  const workerOrigin = new URL(request.url).origin;
 
   const orders = [];
   for (const ref of refs) {
@@ -861,7 +940,7 @@ async function handleMyOrders(request: Request, env: Env, origin: string | null)
     const order = JSON.parse(raw) as StoredOrder;
     if (order.status !== 'approved') continue;
     if (normalizeEmail(order.email) !== normalizeEmail(session.email)) continue;
-    orders.push(publicOrder(order, workerOrigin, order.paymentId || '', sessionToken));
+    orders.push(await publicOrder(env, order, workerOrigin, session));
   }
 
   orders.sort((a, b) => {
@@ -964,44 +1043,58 @@ function mapMpStatus(status: string): StoredOrder['status'] {
   return 'pending';
 }
 
-function publicOrder(
+async function publicOrder(
+  env: Env,
   order: StoredOrder,
   workerOrigin: string,
-  paymentId = '',
-  sessionToken = '',
+  session: SessionRecord | null = null,
 ) {
   const approved = order.status === 'approved';
-  const pay = paymentId || order.paymentId || '';
+  const canDownload =
+    approved &&
+    Boolean(session?.email) &&
+    normalizeEmail(session!.email) === normalizeEmail(order.email);
+
+  const items = [];
+  for (const item of order.items) {
+    const catalogItem = resolveFromCatalog(item.eventId, item.photoId);
+    const ready = approved && Boolean(item.highresKey || catalogItem?.highresKey);
+    let downloadUrl: string | null = null;
+
+    if (ready && canDownload && session) {
+      const token = await mintDownloadToken(env, {
+        email: session.email,
+        ref: order.externalReference,
+        eventId: item.eventId,
+        photoId: item.photoId,
+      });
+      downloadUrl = `${workerOrigin}/api/download?token=${encodeURIComponent(token)}`;
+    }
+
+    items.push({
+      eventId: item.eventId,
+      photoId: item.photoId,
+      title: item.title,
+      unitPrice: item.unitPrice,
+      preview: catalogItem?.preview || item.preview || null,
+      downloadReady: ready && canDownload,
+      downloadUrl,
+    });
+  }
 
   return {
     externalReference: order.externalReference,
     status: order.status,
     total: order.total,
     paidAt: order.paidAt,
-    paymentId: pay || undefined,
-    items: order.items.map((item) => {
-      const catalogItem = resolveFromCatalog(item.eventId, item.photoId);
-      const ready =
-        approved && Boolean(item.highresKey || catalogItem?.highresKey);
-      const params = new URLSearchParams({
-        ref: order.externalReference,
-        eventId: item.eventId,
-        photoId: item.photoId,
-      });
-      if (pay) params.set('payment_id', pay);
-      if (sessionToken) params.set('session', sessionToken);
-
-      return {
-        eventId: item.eventId,
-        photoId: item.photoId,
-        title: item.title,
-        unitPrice: item.unitPrice,
-        preview: catalogItem?.preview || item.preview || null,
-        downloadReady: ready,
-        downloadUrl: ready ? `${workerOrigin}/api/download?${params.toString()}` : null,
-      };
-    }),
+    items,
     message: statusMessage(order.status, approved),
+    ...(approved && !canDownload
+      ? {
+          accessHint:
+            'Para baixar as fotos, acesse Minhas fotos com o mesmo e-mail da compra.',
+        }
+      : {}),
   };
 }
 

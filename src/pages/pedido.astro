@@ -49,6 +49,7 @@ import { withBase } from '../lib/paths';
 <script>
   import { clearCart, formatBRL, readLastOrder } from '../lib/cart';
   import { CHECKOUT_API_BASE } from '../lib/mercadopago';
+  import { withBase } from '../lib/paths';
 
   type PublicItem = {
     eventId: string;
@@ -64,9 +65,18 @@ import { withBase } from '../lib/paths';
     status: string;
     total: number;
     message?: string;
-    paymentId?: string;
+    accessHint?: string;
     items: PublicItem[];
   };
+
+  function escapeHtml(value: string) {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   async function load() {
     const params = new URLSearchParams(window.location.search);
@@ -94,12 +104,11 @@ import { withBase } from '../lib/paths';
 
     const local = ref ? readLastOrder(ref) : null;
     const items = order?.items?.length ? order.items : local?.items || [];
-    const status = order?.status || (urlStatus === 'success' ? 'approved' : urlStatus || 'pending');
-    const pay = order?.paymentId || paymentId;
+    // Só confia em "approved" vindo da API — URL status=success sozinho não libera download.
+    const status = order?.status || (urlStatus === 'success' ? 'pending' : urlStatus || 'pending');
 
     const labels: Record<string, string> = {
       approved: 'Pagamento confirmado',
-      success: 'Pagamento confirmado',
       pending: 'Aguardando pagamento',
       in_process: 'Pagamento em análise',
       failure: 'Pagamento não concluído',
@@ -107,15 +116,21 @@ import { withBase } from '../lib/paths';
     };
 
     statusEl.textContent = labels[status] || 'Atualizando pedido…';
-    messageEl.textContent =
-      order?.message ||
-      (status === 'approved' || status === 'success'
-        ? 'Obrigado! Use os botões abaixo para baixar as fotos.'
-        : 'Se você já pagou, a confirmação pode levar alguns instantes.');
 
-    if (status === 'approved' || status === 'success') {
+    if (status === 'approved') {
       leadEl.textContent = 'Tudo certo com o seu pedido.';
       clearCart();
+      messageEl.textContent =
+        order?.accessHint ||
+        order?.message ||
+        'Para baixar as fotos em alta resolução, acesse Minhas fotos com o mesmo e-mail da compra.';
+    } else if (urlStatus === 'success' && !order) {
+      leadEl.textContent = 'Recebemos seu retorno do pagamento.';
+      messageEl.textContent =
+        'Estamos confirmando com o Mercado Pago. Em instantes você poderá baixar em Minhas fotos.';
+    } else {
+      messageEl.textContent =
+        order?.message || 'Se você já pagou, a confirmação pode levar alguns instantes.';
     }
 
     if (!items.length) {
@@ -124,29 +139,23 @@ import { withBase } from '../lib/paths';
       return;
     }
 
+    const minhasFotos = withBase('minhas-fotos/');
     listEl.innerHTML = items
       .map((item) => {
-        const ready = Boolean(item.downloadReady || status === 'approved' || status === 'success');
-        let href = item.downloadUrl || '';
-        if (!href && ready && ref) {
-          const q = new URLSearchParams({
-            ref,
-            eventId: item.eventId,
-            photoId: item.photoId,
-          });
-          if (pay) q.set('payment_id', pay);
-          href = `${CHECKOUT_API_BASE}/api/download?${q.toString()}`;
-        }
-
+        const title = escapeHtml(item.title || item.photoId);
+        const price = escapeHtml(formatBRL(item.unitPrice));
+        const href = item.downloadUrl ? escapeHtml(item.downloadUrl) : '';
         const action = href
           ? `<a href="${href}" class="border border-paper/40 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-paper transition hover:border-paper hover:bg-paper/5">Baixar</a>`
-          : `<span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">${ready ? 'Preparando…' : 'Aguardando'}</span>`;
+          : status === 'approved'
+            ? `<a href="${escapeHtml(minhasFotos)}" class="border border-paper/40 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-paper transition hover:border-paper hover:bg-paper/5">Minhas fotos</a>`
+            : `<span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Aguardando</span>`;
 
         return `
       <li class="flex items-start justify-between gap-4 py-4">
         <div>
-          <p class="font-display text-lg tracking-wide text-paper">${item.title}</p>
-          <p class="mt-1 text-sm text-muted">${formatBRL(item.unitPrice)}</p>
+          <p class="font-display text-lg tracking-wide text-paper">${title}</p>
+          <p class="mt-1 text-sm text-muted">${price}</p>
         </div>
         ${action}
       </li>`;

@@ -20,14 +20,12 @@ Se o Worker no dashboard tiver **outro nome** (ex.: `silent-brook-154c`), ou ren
 ```bash
 npx wrangler secret put MERCADOPAGO_ACCESS_TOKEN
 # cole o Access Token de teste do Mercado Pago Developers
-```
 
-Opcional:
-
-```bash
 npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
-```
+# assinatura secreta do webhook (obrigatória — requests sem assinatura são rejeitados)
 
+npx wrangler secret put RESEND_API_KEY
+```
 ## Teste rápido
 
 ```bash

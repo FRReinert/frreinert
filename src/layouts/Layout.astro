@@ -25,7 +25,7 @@ const {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&display=swap"
       rel="stylesheet"
     />
     <title>{title}</title>
@@ -37,9 +37,15 @@ const {
           href={withBase()}
           class="font-display text-2xl tracking-[0.04em] text-paper md:text-3xl"
         >
-          Fabricio Roberto Reinert
+          Fabricio Reinert
         </a>
         <div class="flex items-center gap-6">
+          <a
+            href={withBase('publicacoes/')}
+            class="text-xs uppercase tracking-[0.22em] text-paper/80 transition hover:text-paper"
+          >
+            Publicações
+          </a>
           <a
             href={withBase('eventos/')}
             class="text-xs uppercase tracking-[0.22em] text-paper/80 transition hover:text-paper"
@@ -62,18 +68,11 @@ const {
     </main>
 
     <footer class="border-t border-line/80">
-      <div
-        class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-5 py-10 text-sm text-muted md:flex-row md:items-center md:px-8"
-      >
-        <p class="font-display text-base tracking-wide text-paper/70">
-          Fabricio Roberto Reinert
-        </p>
-        <div class="flex flex-wrap gap-5 text-xs uppercase tracking-[0.18em]">
-          <a href={withBase('publicacoes/')} class="hover:text-paper">Publicações</a>
-          <a href={withBase('eventos/')} class="hover:text-paper">Eventos</a>
-          <a href={withBase('minhas-fotos/')} class="hover:text-paper">Minhas fotos</a>
-          <a href={withBase('carrinho/')} class="hover:text-paper">Carrinho</a>
-        </div>
+      <div class="mx-auto flex max-w-6xl flex-wrap gap-5 px-5 py-10 text-xs uppercase tracking-[0.18em] text-muted md:px-8">
+        <a href={withBase('publicacoes/')} class="hover:text-paper">Publicações</a>
+        <a href={withBase('eventos/')} class="hover:text-paper">Eventos</a>
+        <a href={withBase('minhas-fotos/')} class="hover:text-paper">Minhas fotos</a>
+        <a href={withBase('carrinho/')} class="hover:text-paper">Carrinho</a>
       </div>
     </footer>
   </body>

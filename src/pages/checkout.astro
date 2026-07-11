@@ -7,7 +7,7 @@ import { withBase } from '../lib/paths';
   <header class="mb-10 max-w-2xl">
     <h1 class="font-display text-4xl tracking-wide md:text-5xl">Checkout</h1>
     <p class="mt-4 text-muted">
-      Confirme seu e-mail com um código. Depois finalize o pagamento no Mercado Pago.
+      Confirme seu e-mail com um código. Em seguida, finalize o pagamento no Mercado Pago.
     </p>
   </header>
 
@@ -81,8 +81,15 @@ import { withBase } from '../lib/paths';
     </div>
 
     <div class="border border-line/80 px-5 py-4 text-sm leading-relaxed text-muted">
-      Você será direcionado ao Mercado Pago para pagar com Pix, cartão ou saldo. O processo é
-      seguro e leva só alguns minutos.
+      <p>
+        Primeiro envie o código para o seu e-mail e confirme com os 6 dígitos. Só depois disso o
+        botão de pagamento é liberado.
+      </p>
+      <p class="mt-3">
+        Ao clicar em <span class="text-paper">Ir para o pagamento</span>, você será direcionado ao
+        Mercado Pago para pagar com Pix, cartão ou saldo. O processo é seguro e leva só alguns
+        minutos.
+      </p>
     </div>
 
     <p data-checkout-message class="hidden text-sm text-muted" role="status"></p>

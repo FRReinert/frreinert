@@ -6,12 +6,13 @@
   --color-ink: #0a0a0a;
   --color-ink-soft: #141414;
   --color-paper: #f2efe9;
-  --color-muted: #9a958c;
+  --color-muted: #b7b1a6;
   --color-line: #2a2a2a;
 }
 
 html {
   scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -19,8 +20,10 @@ body {
   background: var(--color-ink);
   color: var(--color-paper);
   font-family: var(--font-sans);
-  font-weight: 300;
+  font-weight: 400;
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
@@ -29,12 +32,15 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
 }
 
 .prose-dark {
-  color: color-mix(in srgb, var(--color-paper) 88%, transparent);
-  font-size: 1.05rem;
+  color: color-mix(in srgb, var(--color-paper) 92%, transparent);
+  font-size: 1.0625rem;
   line-height: 1.75;
+  font-weight: 400;
 }
 
 .prose-dark p + p {

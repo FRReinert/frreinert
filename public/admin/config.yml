@@ -5,6 +5,7 @@ backend:
   # OAuth próprio (Cloudflare Worker) — GitHub Pages não usa api.netlify.com
   base_url: https://frreinert-decap-oauth.fabricio-reinert.workers.dev
   auth_endpoint: auth
+  site_domain: frreinert.github.io
 
 media_folder: public/images/uploads
 public_folder: /images/uploads

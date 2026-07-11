@@ -5,10 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager</title>
-    <!-- Caminho absoluto: necessário com base /frreinert (evita página em branco) -->
-    <link href="/frreinert/admin/config.yml" type="text/yaml" rel="cms-config-url" />
   </head>
   <body>
-    <script src="https://unpkg.com/decap-cms@^3.1.2/dist/decap-cms.js"></script>
+    <script>
+      window.CMS_MANUAL_INIT = true;
+    </script>
+    <script src="https://unpkg.com/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://unpkg.com/decap-cms@3.8.4/dist/decap-cms.js"></script>
+    <script>
+      (async function () {
+        try {
+          const res = await fetch('/frreinert/admin/config.yml?v=oauth2', { cache: 'no-store' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const config = jsyaml.load(await res.text());
+          if (!config || !config.backend) throw new Error('config inválido');
+
+          // Força gateway Cloudflare (GitHub Pages não usa Netlify)
+          config.backend.base_url = 'https://frreinert-decap-oauth.fabricio-reinert.workers.dev';
+          config.backend.auth_endpoint = 'auth';
+          config.backend.site_domain = 'frreinert.github.io';
+          config.load_config_file = false;
+
+          window.CMS.init({ config: config });
+        } catch (err) {
+          document.body.innerHTML =
+            '<p style="font-family:sans-serif;padding:2rem">Erro ao iniciar o CMS: ' +
+            String(err && err.message ? err.message : err) +
+            '</p>';
+        }
+      })();
+    </script>
   </body>
 </html>

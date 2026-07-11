@@ -23,7 +23,7 @@ function html(body: string) {
 }
 
 function authSuccessPage(token: string) {
-  const payload = JSON.stringify({ token });
+  const tokenJson = JSON.stringify(token);
   return html(`<!doctype html>
 <html lang="pt-BR">
   <head><meta charset="utf-8" /><title>Autorizando…</title></head>
@@ -31,9 +31,10 @@ function authSuccessPage(token: string) {
     <p>Autorizando Decap CMS…</p>
     <script>
       (function () {
+        var token = ${tokenJson};
         function receiveMessage(message) {
           window.opener.postMessage(
-            'authorization:github:success:${payload}',
+            'authorization:github:success:' + JSON.stringify({ token: token }),
             message.origin
           );
           window.removeEventListener('message', receiveMessage, false);

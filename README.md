@@ -52,6 +52,8 @@ cd workers/frreinert-media && npm ci && npx wrangler deploy
 
 Markdown das publicações permanece no Git; só os binários vão para o R2. SVGs de pagamento em `public/images/payment/` continuam versionados.
 
+**Passo a passo completo:** [docs/PUBLICACOES.md](docs/PUBLICACOES.md)
+
 ## Scripts úteis
 
 | Comando | Ação |

@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import PublicationMedia from '../../components/PublicationMedia.astro';
 import PublicationAudio from '../../components/PublicationAudio.astro';
+import PublicationShare from '../../components/PublicationShare.astro';
 import { assetUrl, withBase } from '../../lib/paths';
 import { parseSpotifyUrl } from '../../lib/spotify';
 
@@ -19,6 +20,7 @@ const { Content } = await render(item);
 const hasAudio = Boolean(
   item.data.audio_file?.trim() || parseSpotifyUrl(item.data.spotify_url),
 );
+const shareUrl = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
 <Layout title={`${item.data.title} | Fabricio Roberto Reinert`} description={item.data.description}>
@@ -45,6 +47,8 @@ const hasAudio = Boolean(
       <h1 class="mt-3 font-display text-4xl tracking-wide md:text-5xl">{item.data.title}</h1>
       <p class="mt-4 text-lg text-muted">{item.data.description}</p>
     </header>
+
+    <PublicationShare title={item.data.title} url={shareUrl} />
 
     <div class="prose-dark max-w-3xl">
       <Content />

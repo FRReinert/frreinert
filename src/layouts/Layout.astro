@@ -1,0 +1,73 @@
+---
+import '../styles/global.css';
+import { withBase } from '../lib/paths';
+import CartBadge from '../components/CartBadge.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Fabricio Roberto Reinert',
+  description = 'Página pessoal — sem algoritmo, sem viralizar, sem obsessão por métricas. Aqui conto histórias com fotografia, filmagem amadora e humor duvidoso.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href={withBase('favicon.svg')} />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-ink text-paper">
+    <header class="relative z-50 w-full border-b border-line/80 bg-ink">
+      <nav class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-6 md:px-8">
+        <a
+          href={withBase()}
+          class="font-display text-2xl tracking-[0.04em] text-paper md:text-3xl"
+        >
+          Fabricio Roberto Reinert
+        </a>
+        <div class="flex items-center gap-6">
+          <a
+            href={withBase('eventos/')}
+            class="text-xs uppercase tracking-[0.22em] text-paper/80 transition hover:text-paper"
+          >
+            Eventos
+          </a>
+          <CartBadge />
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
+      <slot />
+    </main>
+
+    <footer class="border-t border-line/80">
+      <div
+        class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-5 py-10 text-sm text-muted md:flex-row md:items-center md:px-8"
+      >
+        <p class="font-display text-base tracking-wide text-paper/70">
+          Fabricio Roberto Reinert
+        </p>
+        <div class="flex flex-wrap gap-5 text-xs uppercase tracking-[0.18em]">
+          <a href={withBase('publicacoes/')} class="hover:text-paper">Publicações</a>
+          <a href={withBase('eventos/')} class="hover:text-paper">Eventos</a>
+          <a href={withBase('carrinho/')} class="hover:text-paper">Carrinho</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

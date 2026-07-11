@@ -1,0 +1,120 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { withBase } from '../lib/paths';
+---
+
+<Layout title="Carrinho | Fabricio Roberto Reinert" description="Seu carrinho de fotos">
+  <header class="mb-10 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Carrinho</h1>
+    <p class="mt-4 text-muted">Revise as fotos e siga para o checkout.</p>
+  </header>
+
+  <div data-cart-empty class="hidden text-muted">
+    <p>Seu carrinho está vazio.</p>
+    <a
+      href={withBase('eventos/')}
+      class="mt-6 inline-block text-xs uppercase tracking-[0.22em] text-paper underline-offset-4 hover:underline"
+    >
+      Ver eventos
+    </a>
+  </div>
+
+  <div data-cart-filled class="hidden">
+    <ul data-cart-list class="divide-y divide-line/80 border-y border-line/80"></ul>
+    <div class="mt-8 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+      <p class="text-lg">
+        Total: <span data-cart-total class="font-display text-2xl tracking-wide">R$&nbsp;0,00</span>
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <button
+          type="button"
+          data-cart-clear
+          class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+        >
+          Limpar
+        </button>
+        <a
+          href={withBase('checkout/')}
+          class="border border-paper/40 px-6 py-3 text-xs uppercase tracking-[0.28em] text-paper transition hover:border-paper hover:bg-paper/5"
+        >
+          Ir para checkout
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import {
+    cartTotal,
+    formatBRL,
+    readCart,
+    removeFromCart,
+    clearCart,
+    type CartItem,
+  } from '../lib/cart';
+
+  const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+  function assetUrl(path: string) {
+    if (path.startsWith('http')) return path;
+    return `${base}/${path.replace(/^\/+/, '')}`;
+  }
+
+  function render() {
+    const items = readCart();
+    const empty = document.querySelector<HTMLElement>('[data-cart-empty]');
+    const filled = document.querySelector<HTMLElement>('[data-cart-filled]');
+    const list = document.querySelector<HTMLUListElement>('[data-cart-list]');
+    const total = document.querySelector<HTMLElement>('[data-cart-total]');
+    if (!empty || !filled || !list || !total) return;
+
+    if (items.length === 0) {
+      empty.classList.remove('hidden');
+      filled.classList.add('hidden');
+      list.innerHTML = '';
+      return;
+    }
+
+    empty.classList.add('hidden');
+    filled.classList.remove('hidden');
+    total.textContent = formatBRL(cartTotal(items));
+    list.innerHTML = items
+      .map(
+        (item: CartItem) => `
+      <li class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center">
+        <img src="${assetUrl(item.preview)}" alt="" class="aspect-[3/4] w-full max-w-[7rem] object-cover" />
+        <div class="flex-1">
+          <p class="text-xs uppercase tracking-[0.18em] text-muted">${item.eventTitle}</p>
+          <h2 class="mt-1 font-display text-xl tracking-wide">${item.photoTitle}</h2>
+          <p class="mt-1 text-sm text-muted">${formatBRL(item.price)}</p>
+        </div>
+        <button
+          type="button"
+          class="text-xs uppercase tracking-[0.2em] text-muted hover:text-paper"
+          data-remove="${item.eventId}::${item.photoId}"
+        >
+          Remover
+        </button>
+      </li>`,
+      )
+      .join('');
+
+    list.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const [eventId, photoId] = (btn.dataset.remove || '').split('::');
+        if (!eventId || !photoId) return;
+        removeFromCart(eventId, photoId);
+        render();
+      });
+    });
+  }
+
+  document.querySelector('[data-cart-clear]')?.addEventListener('click', () => {
+    clearCart();
+    render();
+  });
+
+  render();
+  window.addEventListener('cart:updated', render);
+</script>

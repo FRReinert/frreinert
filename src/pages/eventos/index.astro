@@ -1,0 +1,55 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { assetUrl, withBase } from '../../lib/paths';
+
+const eventos = (await getCollection('eventos')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+---
+
+<Layout title="Eventos | Fabricio Roberto Reinert" description="Eventos e fotos à venda">
+  <header class="mb-14 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Eventos</h1>
+    <p class="mt-4 text-muted">
+      Escolha as fotos, adicione ao carrinho e finalize o pagamento. A alta resolução sem marca
+      d&apos;água é liberada após a confirmação.
+    </p>
+  </header>
+
+  {
+    eventos.length === 0 ? (
+      <p class="text-muted">Ainda não há nenhum evento.</p>
+    ) : (
+      <ul class="grid gap-10 sm:grid-cols-2">
+        {eventos.map((evento) => (
+          <li>
+            <a href={withBase(`eventos/${evento.id}/`)} class="group block">
+              <div class="thumb-zoom mb-4">
+                <img
+                  src={assetUrl(evento.data.cover)}
+                  alt={evento.data.title}
+                  class="aspect-[3/2] w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <time
+                class="text-[0.65rem] uppercase tracking-[0.2em] text-muted"
+                datetime={evento.data.date.toISOString()}
+              >
+                {evento.data.date.toLocaleDateString('pt-BR')}
+              </time>
+              <h2 class="mt-2 font-display text-2xl tracking-wide text-paper transition group-hover:text-paper/80">
+                {evento.data.title}
+              </h2>
+              <p class="mt-1 text-sm text-muted">{evento.data.description}</p>
+              <p class="mt-2 text-xs uppercase tracking-[0.18em] text-muted">
+                {evento.data.photos.length} foto{evento.data.photos.length === 1 ? '' : 's'}
+              </p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Layout>

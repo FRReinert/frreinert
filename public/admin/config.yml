@@ -1,0 +1,83 @@
+backend:
+  name: github
+  repo: FRReinert/frreinert
+  branch: main
+  # GitHub Pages não hospeda OAuth. Preencha com a URL do seu gateway
+  # (ex.: Netlify Identity proxy, ou um deploy de
+  # https://github.com/vencax/netlify-cms-github-oauth-provider).
+  # Depois de subir o gateway, descomente as duas linhas abaixo:
+  # base_url: https://SEU-GATEWAY-OAUTH
+  # auth_endpoint: auth
+
+media_folder: public/images/uploads
+public_folder: /images/uploads
+
+collections:
+  - name: publicacoes
+    label: Publicações
+    folder: src/content/publicacoes
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: Título, name: title, widget: string }
+      - { label: Data, name: date, widget: datetime }
+      - { label: Descrição, name: description, widget: text }
+      - { label: Capa, name: cover, widget: image }
+      - label: Galeria
+        name: gallery
+        widget: list
+        required: false
+        field: { label: Imagem, name: image, widget: image }
+      - label: Vídeos
+        name: videos
+        widget: list
+        required: false
+        field:
+          {
+            label: URL ou caminho,
+            name: url,
+            widget: string,
+            hint: "URL do YouTube/Vimeo ou caminho /images/uploads/...",
+          }
+      - { label: Texto, name: body, widget: markdown, required: false }
+
+  - name: eventos
+    label: Eventos
+    folder: src/content/eventos
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: Título, name: title, widget: string }
+      - { label: Data, name: date, widget: datetime }
+      - { label: Descrição, name: description, widget: text }
+      - { label: Capa, name: cover, widget: image }
+      - { label: Local, name: location, widget: string, required: false }
+      - label: Fotos à venda
+        name: photos
+        widget: list
+        summary: "{{fields.title}} — R$ {{fields.price}}"
+        fields:
+          - { label: ID, name: id, widget: string, hint: "Identificador único (ex.: foto-001)" }
+          - { label: Título, name: title, widget: string }
+          - {
+              label: Preview,
+              name: preview,
+              widget: image,
+              hint: "Versão com marca d'água (pública)",
+            }
+          - {
+              label: Preço (R$),
+              name: price,
+              widget: number,
+              value_type: float,
+              min: 0,
+              step: 0.01,
+            }
+          - {
+              label: Chave alta resolução,
+              name: highresKey,
+              widget: string,
+              required: false,
+              hint: "ID no storage privado — NÃO coloque URL pública da alta",
+            }
+      - { label: Texto, name: body, widget: markdown, required: false }

@@ -1,0 +1,15 @@
+name = "frreinert-api"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+
+# URL pública após o deploy:
+# https://frreinert-api.fabricio-reinert.workers.dev
+#
+# Secrets (dashboard ou CLI):
+#   npx wrangler secret put MERCADOPAGO_ACCESS_TOKEN
+#   npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
+#
+# Vars não secretas:
+[vars]
+SITE_URL = "https://frreinert.github.io/frreinert"
+# Em dev local, o front usa localhost; CORS libera ambos.

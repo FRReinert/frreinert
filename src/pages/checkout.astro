@@ -1,0 +1,138 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { withBase } from '../lib/paths';
+---
+
+<Layout title="Checkout | Fabricio Roberto Reinert" description="Finalizar compra">
+  <header class="mb-10 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Checkout</h1>
+    <p class="mt-4 text-muted">
+      Confira o pedido e finalize o pagamento. Depois da confirmação, você recebe as fotos em alta
+      resolução, sem marca d&apos;água.
+    </p>
+  </header>
+
+  <div data-checkout-empty class="hidden text-muted">
+    <p>Seu carrinho está vazio.</p>
+    <a
+      href={withBase('eventos/')}
+      class="mt-6 inline-block text-xs uppercase tracking-[0.22em] text-paper underline-offset-4 hover:underline"
+    >
+      Ver eventos
+    </a>
+  </div>
+
+  <div data-checkout-ready class="hidden max-w-xl space-y-8">
+    <div>
+      <p class="text-sm text-muted">Resumo do pedido</p>
+      <p class="mt-2 font-display text-3xl tracking-wide">
+        <span data-checkout-count>0</span> foto(s) — <span data-checkout-total>R$&nbsp;0,00</span>
+      </p>
+    </div>
+
+    <div class="border border-line/80 px-5 py-4 text-sm leading-relaxed text-muted">
+      Você será direcionado ao Mercado Pago para pagar com Pix, cartão ou saldo. O processo é
+      seguro e leva só alguns minutos.
+    </div>
+
+    <p data-checkout-error class="hidden text-sm text-red-300" role="alert"></p>
+
+    <div class="flex flex-wrap gap-4">
+      <a
+        href={withBase('carrinho/')}
+        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+      >
+        ← Voltar ao carrinho
+      </a>
+      <button
+        type="button"
+        data-checkout-pay
+        class="border border-paper/40 px-6 py-3 text-xs uppercase tracking-[0.28em] text-paper transition hover:border-paper hover:bg-paper/5 disabled:opacity-50"
+      >
+        Ir para o pagamento
+      </button>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import {
+    cartCount,
+    cartTotal,
+    formatBRL,
+    readCart,
+    saveLastOrder,
+    type CheckoutPayload,
+  } from '../lib/cart';
+  import { createMercadoPagoCheckout } from '../lib/mercadopago';
+
+  function friendlyError(message: string) {
+    const lower = message.toLowerCase();
+    if (lower.includes('token') || lower.includes('501') || lower.includes('configured')) {
+      return 'O pagamento está temporariamente indisponível. Tente de novo em instantes.';
+    }
+    if (lower.includes('contatar') || lower.includes('cors') || lower.includes('network')) {
+      return 'Não foi possível iniciar o pagamento. Verifique sua conexão e tente novamente.';
+    }
+    if (lower.includes('carrinho')) {
+      return 'Seu carrinho está vazio.';
+    }
+    return 'Não foi possível iniciar o pagamento. Tente novamente em alguns minutos.';
+  }
+
+  function refresh() {
+    const items = readCart();
+    const empty = document.querySelector<HTMLElement>('[data-checkout-empty]');
+    const ready = document.querySelector<HTMLElement>('[data-checkout-ready]');
+    const count = document.querySelector<HTMLElement>('[data-checkout-count]');
+    const total = document.querySelector<HTMLElement>('[data-checkout-total]');
+    if (!empty || !ready || !count || !total) return;
+
+    if (items.length === 0) {
+      empty.classList.remove('hidden');
+      ready.classList.add('hidden');
+      return;
+    }
+
+    empty.classList.add('hidden');
+    ready.classList.remove('hidden');
+    count.textContent = String(cartCount(items));
+    total.textContent = formatBRL(cartTotal(items));
+  }
+
+  document.querySelector('[data-checkout-pay]')?.addEventListener('click', async () => {
+    const button = document.querySelector<HTMLButtonElement>('[data-checkout-pay]');
+    const errorEl = document.querySelector<HTMLElement>('[data-checkout-error]');
+    if (!button || !errorEl) return;
+
+    const items = readCart();
+    if (items.length === 0) return;
+
+    const payload: CheckoutPayload = {
+      items: items.map((item) => ({
+        eventId: item.eventId,
+        photoId: item.photoId,
+      })),
+    };
+
+    button.disabled = true;
+    button.textContent = 'Abrindo pagamento…';
+    errorEl.classList.add('hidden');
+
+    const result = await createMercadoPagoCheckout(payload);
+
+    if (result.ok) {
+      saveLastOrder(result.externalReference, items, cartTotal(items));
+      window.location.href = result.initPoint;
+      return;
+    }
+
+    button.disabled = false;
+    button.textContent = 'Ir para o pagamento';
+    errorEl.textContent = friendlyError(result.error);
+    errorEl.classList.remove('hidden');
+  });
+
+  refresh();
+  window.addEventListener('cart:updated', refresh);
+</script>

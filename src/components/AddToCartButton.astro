@@ -1,0 +1,48 @@
+---
+interface Props {
+  eventId: string;
+  eventTitle: string;
+  photoId: string;
+  photoTitle: string;
+  preview: string;
+  price: number;
+}
+
+const props = Astro.props;
+const payload = JSON.stringify(props);
+---
+
+<button
+  type="button"
+  class="add-to-cart mt-3 w-full border border-paper/35 px-3 py-2 text-[0.65rem] uppercase tracking-[0.2em] text-paper transition hover:border-paper hover:bg-paper/5"
+  data-cart-item={payload}
+>
+  Adicionar ao carrinho
+</button>
+
+<script>
+  import { addToCart, type CartItem } from '../lib/cart';
+
+  function bind(button: HTMLButtonElement) {
+    if (button.dataset.bound === '1') return;
+    button.dataset.bound = '1';
+    button.addEventListener('click', () => {
+      const raw = button.dataset.cartItem;
+      if (!raw) return;
+      const item = JSON.parse(raw) as CartItem;
+      addToCart(item);
+      const previous = button.textContent;
+      button.textContent = 'Adicionado';
+      button.disabled = true;
+      setTimeout(() => {
+        button.textContent = previous;
+        button.disabled = false;
+      }, 1200);
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.add-to-cart').forEach(bind);
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLButtonElement>('.add-to-cart').forEach(bind);
+  });
+</script>

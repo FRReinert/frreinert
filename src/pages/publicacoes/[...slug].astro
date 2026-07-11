@@ -1,0 +1,50 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import PublicationMedia from '../../components/PublicationMedia.astro';
+import { assetUrl, withBase } from '../../lib/paths';
+
+export async function getStaticPaths() {
+  const items = await getCollection('publicacoes');
+  return items.map((item) => ({
+    params: { slug: item.id },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+const { Content } = await render(item);
+---
+
+<Layout title={`${item.data.title} | Fabricio Roberto Reinert`} description={item.data.description}>
+  <article>
+    <p class="mb-8 text-xs uppercase tracking-[0.2em] text-muted">
+      <a href={withBase('publicacoes/')} class="transition hover:text-paper">← Publicações</a>
+    </p>
+
+    <figure class="mb-10 -mx-5 md:mx-0">
+      <img
+        src={assetUrl(item.data.cover)}
+        alt={item.data.title}
+        class="max-h-[75vh] w-full object-cover"
+      />
+    </figure>
+
+    <header class="mb-10 max-w-3xl">
+      <time
+        class="text-[0.65rem] uppercase tracking-[0.2em] text-muted"
+        datetime={item.data.date.toISOString()}
+      >
+        {item.data.date.toLocaleDateString('pt-BR')}
+      </time>
+      <h1 class="mt-3 font-display text-4xl tracking-wide md:text-5xl">{item.data.title}</h1>
+      <p class="mt-4 text-lg text-muted">{item.data.description}</p>
+    </header>
+
+    <div class="prose-dark max-w-3xl">
+      <Content />
+    </div>
+
+    <PublicationMedia gallery={item.data.gallery} videos={item.data.videos} />
+  </article>
+</Layout>

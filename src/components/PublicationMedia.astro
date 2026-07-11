@@ -1,0 +1,66 @@
+---
+import { assetUrl, parseVideo } from '../lib/paths';
+
+interface Props {
+  gallery?: string[];
+  videos?: string[];
+}
+
+const { gallery = [], videos = [] } = Astro.props;
+const embeds = videos.map(parseVideo);
+---
+
+{
+  gallery.length > 0 && (
+    <section class="mt-14" aria-label="Galeria">
+      <div class="grid gap-3 sm:grid-cols-2">
+        {gallery.map((src) => (
+          <figure class="thumb-zoom m-0">
+            <img
+              src={assetUrl(src)}
+              alt=""
+              class="aspect-[4/3] w-full object-cover"
+              loading="lazy"
+            />
+          </figure>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+{
+  embeds.length > 0 && (
+    <section class="mt-14 space-y-8" aria-label="Vídeos">
+      {embeds.map((video) => (
+        <div class="aspect-video w-full overflow-hidden bg-ink-soft">
+          {video.kind === 'youtube' && (
+            <iframe
+              class="h-full w-full"
+              src={`https://www.youtube.com/embed/${video.id}`}
+              title="YouTube video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              loading="lazy"
+            />
+          )}
+          {video.kind === 'vimeo' && (
+            <iframe
+              class="h-full w-full"
+              src={`https://player.vimeo.com/video/${video.id}`}
+              title="Vimeo video"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowfullscreen
+              loading="lazy"
+            />
+          )}
+          {video.kind === 'file' && (
+            <video class="h-full w-full object-contain" controls preload="metadata" src={video.src}>
+              <track kind="captions" />
+            </video>
+          )}
+        </div>
+      ))}
+    </section>
+  )
+}

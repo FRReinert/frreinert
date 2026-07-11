@@ -1,0 +1,139 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { withBase } from '../lib/paths';
+---
+
+<Layout title="Seu pedido | Fabricio Roberto Reinert" description="Status do pedido">
+  <header class="mb-10 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Seu pedido</h1>
+    <p class="mt-4 text-muted" data-pedido-lead>
+      Estamos confirmando seu pagamento.
+    </p>
+  </header>
+
+  <div data-pedido-body class="max-w-xl space-y-8">
+    <div class="border border-line/80 px-5 py-4">
+      <p class="text-xs uppercase tracking-[0.2em] text-muted">Status</p>
+      <p data-pedido-status class="mt-2 font-display text-2xl tracking-wide">Carregando…</p>
+      <p data-pedido-message class="mt-3 text-sm leading-relaxed text-muted"></p>
+    </div>
+
+    <div>
+      <p class="mb-4 text-sm text-muted">Fotos</p>
+      <ul data-pedido-items class="divide-y divide-line/80 border-y border-line/80"></ul>
+    </div>
+
+    <div class="flex flex-wrap gap-4">
+      <a
+        href={withBase('eventos/')}
+        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+      >
+        ← Voltar aos eventos
+      </a>
+      <a
+        href={withBase()}
+        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+      >
+        Início
+      </a>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { clearCart, formatBRL, readLastOrder } from '../lib/cart';
+  import { CHECKOUT_API_BASE } from '../lib/mercadopago';
+
+  type PublicItem = {
+    eventId: string;
+    photoId: string;
+    title: string;
+    unitPrice: number;
+    downloadReady?: boolean;
+  };
+
+  type OrderResponse = {
+    externalReference: string;
+    status: string;
+    total: number;
+    message?: string;
+    items: PublicItem[];
+  };
+
+  async function load() {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') || '';
+    const paymentId = params.get('payment_id') || params.get('collection_id') || '';
+    const urlStatus = params.get('status') || '';
+
+    const statusEl = document.querySelector<HTMLElement>('[data-pedido-status]');
+    const messageEl = document.querySelector<HTMLElement>('[data-pedido-message]');
+    const leadEl = document.querySelector<HTMLElement>('[data-pedido-lead]');
+    const listEl = document.querySelector<HTMLUListElement>('[data-pedido-items]');
+    if (!statusEl || !messageEl || !listEl || !leadEl) return;
+
+    const query = new URLSearchParams();
+    if (ref) query.set('ref', ref);
+    if (paymentId) query.set('payment_id', paymentId);
+
+    let order: OrderResponse | null = null;
+    try {
+      const res = await fetch(`${CHECKOUT_API_BASE}/api/orders?${query.toString()}`);
+      if (res.ok) order = (await res.json()) as OrderResponse;
+    } catch {
+      // usa snapshot local
+    }
+
+    const local = ref ? readLastOrder(ref) : null;
+    const items = order?.items?.length ? order.items : local?.items || [];
+    const status = order?.status || (urlStatus === 'success' ? 'approved' : urlStatus || 'pending');
+
+    const labels: Record<string, string> = {
+      approved: 'Pagamento confirmado',
+      success: 'Pagamento confirmado',
+      pending: 'Aguardando pagamento',
+      in_process: 'Pagamento em análise',
+      failure: 'Pagamento não concluído',
+      rejected: 'Pagamento não aprovado',
+    };
+
+    statusEl.textContent = labels[status] || 'Atualizando pedido…';
+    messageEl.textContent =
+      order?.message ||
+      (status === 'approved' || status === 'success'
+        ? 'Obrigado! Em breve você poderá baixar as fotos em alta resolução.'
+        : 'Se você já pagou, a confirmação pode levar alguns instantes.');
+
+    if (status === 'approved' || status === 'success') {
+      leadEl.textContent = 'Tudo certo com o seu pedido.';
+      clearCart();
+    }
+
+    if (!items.length) {
+      listEl.innerHTML =
+        '<li class="py-4 text-sm text-muted">Os itens do pedido aparecerão aqui após a confirmação.</li>';
+      return;
+    }
+
+    listEl.innerHTML = items
+      .map(
+        (item) => `
+      <li class="flex items-start justify-between gap-4 py-4">
+        <div>
+          <p class="font-display text-lg tracking-wide text-paper">${item.title}</p>
+          <p class="mt-1 text-sm text-muted">${formatBRL(item.unitPrice)}</p>
+        </div>
+        <span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">
+          ${
+            item.downloadReady || status === 'approved' || status === 'success'
+              ? 'Liberada em breve'
+              : 'Aguardando'
+          }
+        </span>
+      </li>`,
+      )
+      .join('');
+  }
+
+  load();
+</script>

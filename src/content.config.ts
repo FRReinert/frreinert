@@ -26,7 +26,7 @@ const publicacoes = defineCollection({
 
 const eventPhoto = z.object({
   id: z.string(),
-  title: z.string(),
+  title: z.string().optional(),
   preview: z.string(),
   price: z.coerce.number().nonnegative(),
   highresKey: z.string().optional(),

@@ -55,10 +55,21 @@ collections:
       - label: Fotos à venda
         name: photos
         widget: list
-        summary: "{{fields.title}} — R$ {{fields.price}}"
+        summary: "{{fields.id}} — R$ {{fields.price}}"
         fields:
-          - { label: ID, name: id, widget: string, hint: "Identificador único (ex.: foto-001)" }
-          - { label: Título, name: title, widget: string }
+          - {
+              label: Código,
+              name: id,
+              widget: string,
+              hint: "Código único da foto (ex.: ana-pedro-001). É o que o cliente vê.",
+            }
+          - {
+              label: Título interno,
+              name: title,
+              widget: string,
+              required: false,
+              hint: "Opcional — não aparece no site; só para organização no CMS",
+            }
           - {
               label: Preview,
               name: preview,

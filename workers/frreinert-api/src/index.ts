@@ -111,7 +111,7 @@ function resolveFromCatalog(eventId: string, photoId: string): ResolvedItem | nu
   return {
     eventId,
     photoId,
-    title: `${event.title} — ${photo.title}`.slice(0, 250),
+    title: `${event.title} — ${photoId}`.slice(0, 250),
     unitPrice: photo.price,
     highresKey: photo.highresKey || undefined,
   };

@@ -4,17 +4,17 @@
       "title": "Casamento Ana & Pedro",
       "photos": {
         "ana-pedro-001": {
-          "title": "Entrada da noiva",
+          "title": "ana-pedro-001",
           "price": 6,
           "highresKey": "eventos/casamento-ana-pedro/ana-pedro-001.jpg"
         },
         "ana-pedro-002": {
-          "title": "Beijo",
+          "title": "ana-pedro-002",
           "price": 6,
           "highresKey": "eventos/casamento-ana-pedro/ana-pedro-002.jpg"
         },
         "ana-pedro-003": {
-          "title": "Festa",
+          "title": "ana-pedro-003",
           "price": 6,
           "highresKey": "eventos/casamento-ana-pedro/ana-pedro-003.jpg"
         }

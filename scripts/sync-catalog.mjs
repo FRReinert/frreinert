@@ -35,7 +35,7 @@ for (const file of files) {
   for (const photo of data.photos || []) {
     if (!photo?.id) continue;
     photos[photo.id] = {
-      title: photo.title || photo.id,
+      title: photo.id,
       price: Number(photo.price),
       highresKey: photo.highresKey || null,
     };

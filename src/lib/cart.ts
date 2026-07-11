@@ -83,7 +83,7 @@ export function saveLastOrder(ref: string, items: CartItem[], total: number) {
       items: items.map((i) => ({
         eventId: i.eventId,
         photoId: i.photoId,
-        title: `${i.eventTitle} — ${i.photoTitle}`,
+        title: `${i.eventTitle} — ${i.photoId}`,
         unitPrice: i.price,
       })),
     }),

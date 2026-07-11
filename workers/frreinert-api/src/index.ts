@@ -24,6 +24,7 @@ type CatalogPhoto = {
   title: string;
   price: number;
   highresKey: string | null;
+  preview?: string | null;
 };
 
 type ResolvedItem = {
@@ -32,6 +33,7 @@ type ResolvedItem = {
   title: string;
   unitPrice: number;
   highresKey?: string;
+  preview?: string;
 };
 
 type CheckoutRequest = {
@@ -114,6 +116,7 @@ function resolveFromCatalog(eventId: string, photoId: string): ResolvedItem | nu
     title: `${event.title} — ${photoId}`.slice(0, 250),
     unitPrice: photo.price,
     highresKey: photo.highresKey || undefined,
+    preview: photo.preview || undefined,
   };
 }
 
@@ -977,9 +980,9 @@ function publicOrder(
     paidAt: order.paidAt,
     paymentId: pay || undefined,
     items: order.items.map((item) => {
+      const catalogItem = resolveFromCatalog(item.eventId, item.photoId);
       const ready =
-        approved &&
-        Boolean(item.highresKey || resolveFromCatalog(item.eventId, item.photoId)?.highresKey);
+        approved && Boolean(item.highresKey || catalogItem?.highresKey);
       const params = new URLSearchParams({
         ref: order.externalReference,
         eventId: item.eventId,
@@ -993,6 +996,7 @@ function publicOrder(
         photoId: item.photoId,
         title: item.title,
         unitPrice: item.unitPrice,
+        preview: catalogItem?.preview || item.preview || null,
         downloadReady: ready,
         downloadUrl: ready ? `${workerOrigin}/api/download?${params.toString()}` : null,
       };

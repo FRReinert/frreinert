@@ -38,6 +38,7 @@ for (const file of files) {
       title: photo.id,
       price: Number(photo.price),
       highresKey: photo.highresKey || null,
+      preview: photo.preview || null,
     };
   }
   catalog.events[eventId] = {

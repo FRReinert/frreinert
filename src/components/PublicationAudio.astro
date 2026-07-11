@@ -35,7 +35,14 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
           <p class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Trilha sonora</p>
           <p class="truncate text-sm text-paper/90">Em loop</p>
         </div>
-        <audio data-pub-audio-el src={localSrc} loop preload="auto" playsinline />
+        <audio
+          data-pub-audio-el
+          src={localSrc}
+          crossorigin="anonymous"
+          loop
+          preload="auto"
+          playsinline
+        />
       </div>
     </div>
 

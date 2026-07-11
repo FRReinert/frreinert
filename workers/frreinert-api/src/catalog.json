@@ -1,27 +1,3 @@
 {
-  "events": {
-    "casamento-ana-pedro": {
-      "title": "Casamento Ana & Pedro",
-      "photos": {
-        "ana-pedro-001": {
-          "title": "ana-pedro-001",
-          "price": 6,
-          "highresKey": "eventos/casamento-ana-pedro/ana-pedro-001.jpg",
-          "preview": "/images/uploads/placeholder.svg"
-        },
-        "ana-pedro-002": {
-          "title": "ana-pedro-002",
-          "price": 6,
-          "highresKey": "eventos/casamento-ana-pedro/ana-pedro-002.jpg",
-          "preview": "/images/uploads/placeholder.svg"
-        },
-        "ana-pedro-003": {
-          "title": "ana-pedro-003",
-          "price": 6,
-          "highresKey": "eventos/casamento-ana-pedro/ana-pedro-003.jpg",
-          "preview": "/images/uploads/placeholder.svg"
-        }
-      }
-    }
-  }
+  "events": {}
 }

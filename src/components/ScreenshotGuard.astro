@@ -39,136 +39,92 @@
 
 <script>
   const BODY_CLASS = 'screenshot-guard-on';
-  const LONG_PRESS_MS = 400;
+  const isMobile =
+    'ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches;
 
-  let armed = false;
-  let keyLock = false;
-  let touchLock = false;
-  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  // Mobile browsers (esp. iOS) fire blur/visibility during scroll — skip blur guards.
+  // Keep only light anti-save CSS + context menu block below.
+  if (isMobile) {
+    document.documentElement.setAttribute('data-screenshot-guard', '');
+    document.addEventListener('contextmenu', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element) || !target.closest('main img')) return;
+      e.preventDefault();
+    });
+  } else {
+    let armed = false;
+    let keyLock = false;
 
-  function lock() {
-    if (armed) return;
-    armed = true;
-    document.body.classList.add(BODY_CLASS);
-  }
-
-  function unlock() {
-    if (!armed) return;
-    if (keyLock || touchLock) return;
-    if (document.hidden || !document.hasFocus()) return;
-    armed = false;
-    document.body.classList.remove(BODY_CLASS);
-  }
-
-  function tryUnlock() {
-    keyLock = false;
-    touchLock = false;
-    unlock();
-  }
-
-  function onVisibility() {
-    if (document.hidden) {
-      lock();
-    } else {
-      tryUnlock();
+    function lock() {
+      if (armed) return;
+      armed = true;
+      document.body.classList.add(BODY_CLASS);
     }
-  }
 
-  function onBlur() {
-    lock();
-  }
+    function unlock() {
+      if (!armed) return;
+      if (keyLock) return;
+      if (document.hidden || !document.hasFocus()) return;
+      armed = false;
+      document.body.classList.remove(BODY_CLASS);
+    }
 
-  function onFocus() {
-    tryUnlock();
-  }
-
-  function onPageHide() {
-    lock();
-  }
-
-  function onPageShow() {
-    tryUnlock();
-  }
-
-  function onFreeze() {
-    lock();
-  }
-
-  function isGuardKey(e: KeyboardEvent) {
-    if (e.key === 'Meta' || e.key === 'OS' || e.key === 'PrintScreen') return true;
-    if (e.metaKey && e.shiftKey) return true;
-    if (e.ctrlKey && e.shiftKey && (e.key === 's' || e.key === 'S')) return true;
-    return false;
-  }
-
-  function onKeyDown(e: KeyboardEvent) {
-    if (!isGuardKey(e)) return;
-    keyLock = true;
-    lock();
-  }
-
-  function onKeyUp(e: KeyboardEvent) {
-    if (e.key === 'Meta' || e.key === 'OS') {
+    function tryUnlock() {
       keyLock = false;
       unlock();
-      return;
     }
-    if (e.key === 'PrintScreen') {
-      // Keep blur briefly so the capture is more likely obscured
-      window.setTimeout(() => {
+
+    function onVisibility() {
+      if (document.hidden) {
+        lock();
+      } else {
+        tryUnlock();
+      }
+    }
+
+    function isGuardKey(e: KeyboardEvent) {
+      if (e.key === 'Meta' || e.key === 'OS' || e.key === 'PrintScreen') return true;
+      if (e.metaKey && e.shiftKey) return true;
+      if (e.ctrlKey && e.shiftKey && (e.key === 's' || e.key === 'S')) return true;
+      return false;
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (!isGuardKey(e)) return;
+      keyLock = true;
+      lock();
+    }
+
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === 'Meta' || e.key === 'OS') {
         keyLock = false;
         unlock();
-      }, 500);
+        return;
+      }
+      if (e.key === 'PrintScreen') {
+        window.setTimeout(() => {
+          keyLock = false;
+          unlock();
+        }, 500);
+      }
     }
-  }
 
-  function clearLongPressTimer() {
-    if (longPressTimer !== null) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
+    function onContextMenu(e: Event) {
+      const target = e.target;
+      if (!(target instanceof Element) || !target.closest('main img')) return;
+      e.preventDefault();
     }
-  }
 
-  function onTouchStart(e: TouchEvent) {
-    const target = e.target;
-    if (!(target instanceof Element) || !target.closest('main img')) return;
+    document.documentElement.setAttribute('data-screenshot-guard', '');
 
-    clearLongPressTimer();
-    longPressTimer = setTimeout(() => {
-      touchLock = true;
-      lock();
-    }, LONG_PRESS_MS);
-  }
-
-  function onTouchEnd() {
-    clearLongPressTimer();
-    if (touchLock) {
-      touchLock = false;
-      unlock();
-    }
-  }
-
-  function onContextMenu(e: Event) {
-    const target = e.target;
-    if (!(target instanceof Element) || !target.closest('main img')) return;
-    e.preventDefault();
-  }
-
-  document.documentElement.setAttribute('data-screenshot-guard', '');
-
-  document.addEventListener('visibilitychange', onVisibility);
-  window.addEventListener('blur', onBlur);
-  window.addEventListener('focus', onFocus);
-  window.addEventListener('pagehide', onPageHide);
-  window.addEventListener('pageshow', onPageShow);
-  document.addEventListener('freeze', onFreeze);
-  window.addEventListener('keydown', onKeyDown);
-  window.addEventListener('keyup', onKeyUp);
-  document.addEventListener('contextmenu', onContextMenu);
-
-  if ('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches) {
-    document.addEventListener('touchstart', onTouchStart, { passive: true });
-    document.addEventListener('touchend', onTouchEnd);
-    document.addEventListener('touchcancel', onTouchEnd);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('blur', () => lock());
+    window.addEventListener('focus', () => tryUnlock());
+    window.addEventListener('pagehide', () => lock());
+    window.addEventListener('pageshow', () => tryUnlock());
+    document.addEventListener('freeze', () => lock());
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    document.addEventListener('contextmenu', onContextMenu);
   }
 </script>

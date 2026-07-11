@@ -110,6 +110,27 @@ npx wrangler r2 object put frreinert-photos/eventos/casamento-ana-pedro/ana-pedr
 
 Sem `--remote` o Wrangler grava só no R2 local.
 
+## Ingestão em lote (preview + CMS + R2)
+
+Uma pasta local = um evento (o nome da pasta vira o `eventId`).
+
+```bash
+npm run ingest-photos -- --dir ./inbox/casamento-ana-pedro \
+  --title "Casamento Ana & Pedro" \
+  --price 6 \
+  --location "Porto Alegre, RS"
+```
+
+O script:
+1. Gera preview 800px com marca d'água em `public/images/uploads/eventos/{eventId}/`
+2. Atualiza `src/content/eventos/{eventId}.md`
+3. Sobe a alta no R2 (`eventos/{eventId}/{codigo}.jpg`) — requer `wrangler` logado
+4. Roda `sync-catalog`
+
+Flags: `--dry-run`, `--skip-r2`, `--max-edge 800`.
+
+Depois: commit/push do site e `cd workers/frreinert-api && npx wrangler deploy` (catálogo).
+
 ## Teste rápido
 
 1. `npm run dev` + Worker deployado com secrets

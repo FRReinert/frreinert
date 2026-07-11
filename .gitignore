@@ -29,3 +29,10 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Heavy media — staged by Decap, then synced to R2 (npm run sync-media -- --prune)
+public/images/uploads/**
+!public/images/uploads/.gitkeep
+!public/images/uploads/placeholder.svg
+public/audio/**
+!public/audio/.gitkeep

@@ -30,7 +30,7 @@ function corsHeaders(request: Request): HeadersInit {
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     'Access-Control-Allow-Headers': 'Range, Content-Type',
     'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
-    'Vary': 'Origin',
+    Vary: 'Origin',
   };
 }
 
@@ -44,6 +44,33 @@ function contentTypeFor(key: string): string {
 function isAllowedKey(key: string): boolean {
   if (!key || key.includes('..')) return false;
   return ALLOWED_PREFIXES.some((p) => key.startsWith(p));
+}
+
+function applyObjectHeaders(
+  headers: Headers,
+  object: R2Object,
+  key: string,
+  includeContentRange: boolean,
+) {
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  headers.set('Accept-Ranges', 'bytes');
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  // Always override — metadata from put may be missing or wrong for browsers.
+  headers.set('Content-Type', contentTypeFor(key));
+
+  if (includeContentRange && object.range && 'offset' in object.range) {
+    const offset = object.range.offset ?? 0;
+    const length =
+      'length' in object.range && typeof object.range.length === 'number'
+        ? object.range.length
+        : object.size;
+    // object.size is the full object size when a range was requested.
+    headers.set('Content-Range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
+    headers.set('Content-Length', String(length));
+  } else {
+    headers.set('Content-Length', String(object.size));
+  }
 }
 
 export default {
@@ -64,32 +91,24 @@ export default {
     }
 
     const hasRange = request.headers.has('Range');
-    const object = await env.MEDIA.get(
-      key,
-      hasRange ? { range: request.headers, onlyIf: request.headers } : { onlyIf: request.headers },
-    );
+    const object = await env.MEDIA.get(key, hasRange ? { range: request.headers } : undefined);
 
     if (!object) {
       return new Response('Not Found', { status: 404, headers: corsHeaders(request) });
     }
 
     const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set('etag', object.httpEtag);
-    headers.set('Accept-Ranges', 'bytes');
-    headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-    if (!headers.has('Content-Type')) {
-      headers.set('Content-Type', contentTypeFor(key));
-    }
+    applyObjectHeaders(headers, object, key, hasRange);
     for (const [k, v] of Object.entries(corsHeaders(request))) {
       headers.set(k, v);
     }
 
+    const status = hasRange ? 206 : 200;
+
     if (request.method === 'HEAD') {
-      return new Response(null, { status: hasRange ? 206 : 200, headers });
+      return new Response(null, { status, headers });
     }
 
-    const status = hasRange ? 206 : 200;
     return new Response(object.body, { status, headers });
   },
 } satisfies ExportedHandler<Env>;

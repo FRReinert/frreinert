@@ -16,7 +16,7 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
 {
   localSrc && (
     <div
-      class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 opacity-0 transition-opacity duration-[1800ms] ease-out md:px-5 md:pb-4"
+      class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 md:px-5 md:pb-4"
       data-pub-audio
       data-pub-audio-local
     >
@@ -25,11 +25,11 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
           type="button"
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line/80 text-paper transition hover:border-paper/50"
           data-audio-toggle
-          aria-label="Pausar trilha"
-          aria-pressed="true"
+          aria-label="Tocar trilha"
+          aria-pressed="false"
         >
-          <span data-audio-icon-pause aria-hidden="true">❚❚</span>
-          <span data-audio-icon-play class="hidden" aria-hidden="true">▶</span>
+          <span data-audio-icon-pause class="hidden" aria-hidden="true">❚❚</span>
+          <span data-audio-icon-play aria-hidden="true">▶</span>
         </button>
         <div class="min-w-0 flex-1">
           <p class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Trilha sonora</p>
@@ -49,6 +49,7 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
     <script>
       (function () {
         const FADE_SEC = 1.8;
+        const CANPLAY_MS = 8000;
         const root = document.querySelector<HTMLElement>('[data-pub-audio-local]');
         const audio = document.querySelector<HTMLAudioElement>('[data-pub-audio-el]');
         const toggle = document.querySelector<HTMLButtonElement>('[data-audio-toggle]');
@@ -60,10 +61,8 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
         btnTop?.classList.add('bottom-28');
         btnTop?.classList.remove('bottom-5');
 
-        let ctx: AudioContext | null = null;
-        let gain: GainNode | null = null;
-        let wired = false;
         let started = false;
+        let fading = false;
 
         function setUiPlaying(playing: boolean) {
           iconPlay?.classList.toggle('hidden', playing);
@@ -72,82 +71,95 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
           toggle.setAttribute('aria-label', playing ? 'Pausar trilha' : 'Tocar trilha');
         }
 
-        function fadeInPlayer() {
-          requestAnimationFrame(() => {
-            root.classList.remove('opacity-0');
-            root.classList.add('opacity-100');
+        function waitForCanPlay(el: HTMLAudioElement, timeoutMs: number) {
+          if (el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+            return Promise.resolve();
+          }
+          return new Promise<void>((resolve, reject) => {
+            const onReady = () => {
+              cleanup();
+              resolve();
+            };
+            const onError = () => {
+              cleanup();
+              reject(new Error('audio error'));
+            };
+            const timer = window.setTimeout(() => {
+              cleanup();
+              // Try anyway — some browsers never fire canplay for streaming.
+              resolve();
+            }, timeoutMs);
+            const cleanup = () => {
+              window.clearTimeout(timer);
+              el.removeEventListener('canplay', onReady);
+              el.removeEventListener('loadeddata', onReady);
+              el.removeEventListener('error', onError);
+            };
+            el.addEventListener('canplay', onReady, { once: true });
+            el.addEventListener('loadeddata', onReady, { once: true });
+            el.addEventListener('error', onError, { once: true });
+            el.load();
           });
         }
 
-        function ensureGraph() {
-          if (wired) return;
-          const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-          ctx = new AC();
-          const source = ctx.createMediaElementSource(audio);
-          gain = ctx.createGain();
-          gain.gain.value = 0;
-          source.connect(gain);
-          gain.connect(ctx.destination);
-          wired = true;
+        function fadeVolume(from: number, to: number, seconds: number) {
+          if (fading) return Promise.resolve();
+          fading = true;
+          audio.volume = from;
+          const start = performance.now();
+          const duration = Math.max(0.05, seconds) * 1000;
+          return new Promise<void>((resolve) => {
+            const step = (now: number) => {
+              const t = Math.min(1, (now - start) / duration);
+              audio.volume = from + (to - from) * t;
+              if (t < 1) {
+                requestAnimationFrame(step);
+              } else {
+                fading = false;
+                resolve();
+              }
+            };
+            requestAnimationFrame(step);
+          });
         }
 
         async function startWithFade() {
-          ensureGraph();
-          if (!ctx || !gain) return;
-          await ctx.resume();
-          gain.gain.cancelScheduledValues(ctx.currentTime);
-          gain.gain.setValueAtTime(0, ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(1, ctx.currentTime + FADE_SEC);
+          await waitForCanPlay(audio, CANPLAY_MS);
           audio.loop = true;
+          audio.volume = 0;
           await audio.play();
           started = true;
           setUiPlaying(true);
-          fadeInPlayer();
+          void fadeVolume(0, 1, FADE_SEC);
         }
 
         async function pauseTrack() {
-          if (!ctx || !gain) {
-            audio.pause();
-            setUiPlaying(false);
-            return;
-          }
-          const now = ctx.currentTime;
-          gain.gain.cancelScheduledValues(now);
-          gain.gain.setValueAtTime(gain.gain.value, now);
-          gain.gain.linearRampToValueAtTime(0, now + 0.35);
-          setTimeout(() => audio.pause(), 360);
+          await fadeVolume(audio.volume, 0, 0.35);
+          audio.pause();
           setUiPlaying(false);
         }
 
         async function resumeTrack() {
-          ensureGraph();
-          if (!ctx || !gain) return;
-          await ctx.resume();
-          gain.gain.cancelScheduledValues(ctx.currentTime);
-          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.5);
+          await waitForCanPlay(audio, CANPLAY_MS);
+          audio.volume = Math.max(audio.volume, 0.01);
           await audio.play();
           setUiPlaying(true);
+          if (audio.volume < 0.95) void fadeVolume(audio.volume, 1, 0.5);
         }
 
         toggle.addEventListener('click', () => {
-          if (audio.paused) void resumeTrack();
+          if (audio.paused) void resumeTrack().catch(() => setUiPlaying(false));
           else void pauseTrack();
         });
 
-        const tryAutoplay = () => {
-          void startWithFade().catch(() => {
-            fadeInPlayer();
-            setUiPlaying(false);
-          });
-        };
-
-        // Autoplay (pode ser bloqueado); fallback no primeiro gesto
-        tryAutoplay();
+        // Autoplay may be blocked; player stays visible either way.
+        void startWithFade().catch(() => {
+          setUiPlaying(false);
+        });
 
         const onGesture = () => {
           if (!started || audio.paused) {
-            void startWithFade().catch(() => {});
+            void startWithFade().catch(() => setUiPlaying(false));
           }
           window.removeEventListener('pointerdown', onGesture);
           window.removeEventListener('keydown', onGesture);
@@ -167,7 +179,7 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
 {
   embed && (
     <div
-      class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 opacity-0 transition-opacity duration-[1800ms] ease-out md:px-5 md:pb-4"
+      class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 md:px-5 md:pb-4"
       data-pub-audio
       data-spotify-uri={embed.uri}
     >
@@ -178,21 +190,10 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
 
     <script is:inline define:vars={{ spotifyUri: embed.uri }}>
       (function () {
-        const FADE_MS = 1800;
-
         function armBackToTop() {
           const btn = document.querySelector('[data-back-to-top]');
           btn?.classList.add('bottom-28');
           btn?.classList.remove('bottom-5');
-        }
-
-        function fadeInPlayer() {
-          const root = document.querySelector('[data-pub-audio]');
-          if (!root) return;
-          requestAnimationFrame(() => {
-            root.classList.remove('opacity-0');
-            root.classList.add('opacity-100');
-          });
         }
 
         function tryPlay(controller) {
@@ -211,7 +212,6 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
             element,
             { uri: spotifyUri, width: '100%', height: 80 },
             function (controller) {
-              fadeInPlayer();
               tryPlay(controller);
               setTimeout(function () {
                 tryPlay(controller);
@@ -231,7 +231,6 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
               window.addEventListener('keydown', playOnGesture);
               window.addEventListener('touchstart', playOnGesture, { passive: true });
               window.addEventListener('scroll', playOnGesture, { passive: true });
-              setTimeout(fadeInPlayer, FADE_MS);
             },
           );
         }

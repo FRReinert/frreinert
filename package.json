@@ -15,6 +15,7 @@
     "ingest-photos": "node scripts/ingest-event-photos.mjs",
     "optimize-images": "node scripts/optimize-blog-images.mjs",
     "sync-media": "node scripts/sync-media.mjs",
+    "sync-media:prune": "node scripts/sync-media.mjs --prune",
     "cms": "npx --yes decap-server"
   },
   "dependencies": {

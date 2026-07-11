@@ -23,6 +23,9 @@ const publicacoes = defineCollection({
     carousel: z.boolean().optional().default(false),
     gallery: z.array(imageItem).optional().default([]),
     videos: z.array(videoItem).optional().default([]),
+    /** Áudio próprio (MP3 etc.) — loop + fade-in; tem prioridade sobre Spotify */
+    audio_file: z.string().optional(),
+    spotify_url: z.union([z.string().url(), z.literal('')]).optional(),
   }),
 });
 

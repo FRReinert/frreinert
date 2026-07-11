@@ -60,6 +60,23 @@ collections:
             widget: string,
             hint: "URL do YouTube/Vimeo ou caminho /images/uploads/...",
           }
+      - {
+          label: Áudio da publicação,
+          name: audio_file,
+          widget: file,
+          required: false,
+          # / no início = relativo à raiz do repo (sem isso o Decap grava dentro de src/content/…)
+          media_folder: /public/audio,
+          public_folder: /audio,
+          hint: "Recomendado. MP3/OGG que você tem direito de usar. Toca a faixa inteira em loop, com fade-in.",
+        }
+      - {
+          label: Música (Spotify),
+          name: spotify_url,
+          widget: string,
+          required: false,
+          hint: "Só ~30s de preview sem login Spotify Premium do visitante. Prefira “Áudio da publicação” para loop completo.",
+        }
       - { label: Texto, name: body, widget: markdown, required: false }
 
   - name: eventos

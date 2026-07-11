@@ -2,7 +2,9 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import PublicationMedia from '../../components/PublicationMedia.astro';
+import PublicationAudio from '../../components/PublicationAudio.astro';
 import { assetUrl, withBase } from '../../lib/paths';
+import { parseSpotifyUrl } from '../../lib/spotify';
 
 export async function getStaticPaths() {
   const items = await getCollection('publicacoes');
@@ -14,10 +16,13 @@ export async function getStaticPaths() {
 
 const { item } = Astro.props;
 const { Content } = await render(item);
+const hasAudio = Boolean(
+  item.data.audio_file?.trim() || parseSpotifyUrl(item.data.spotify_url),
+);
 ---
 
 <Layout title={`${item.data.title} | Fabricio Roberto Reinert`} description={item.data.description}>
-  <article>
+  <article class:list={[hasAudio && 'pb-28']}>
     <p class="mb-8 text-xs uppercase tracking-[0.2em] text-muted">
       <a href={withBase('publicacoes/')} class="transition hover:text-paper">← Publicações</a>
     </p>
@@ -50,5 +55,7 @@ const { Content } = await render(item);
       videos={item.data.videos}
       carousel={item.data.carousel}
     />
+
+    <PublicationAudio audioFile={item.data.audio_file} spotifyUrl={item.data.spotify_url} />
   </article>
 </Layout>

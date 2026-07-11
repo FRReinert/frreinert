@@ -25,7 +25,7 @@ gallery:
   - /images/uploads/scrl_0124.jpg
   - /images/uploads/scrl_0123.jpg
   - /images/uploads/scrl_0122.jpg
-audio_file: /audio/vava-ribeiro-calmaria.mp3
+audio_file: /audio/vava-ribeiro-calmaria-v2.mp3
 ---
 Por muitos anos as festas culturais da região se tornaram mais tradicionais do que as tradições que elas tentam resgatar. Festas alemãs e italianas emulando os costumes antigo, resgatando o jeito de se vestir e se divertir, criando a partir destes costumes um tipo de pseudo nostalgia.
 

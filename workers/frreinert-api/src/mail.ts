@@ -97,3 +97,23 @@ export function magicLinkEmail(env: MailEnv, email: string, token: string) {
 
   return { to: email, subject, text, html };
 }
+
+export function emailOtpEmail(email: string, code: string) {
+  const subject = 'Seu código de verificação';
+  const text = [
+    `Seu código de verificação é: ${code}`,
+    '',
+    'Ele vale por 10 minutos. Se você não pediu este código, ignore este e-mail.',
+    '',
+    'Fabricio Roberto Reinert',
+  ].join('\n');
+
+  const html = `
+    <p>Seu código de verificação é:</p>
+    <p style="font-size:24px;letter-spacing:0.2em;font-weight:600">${code}</p>
+    <p>Ele vale por 10 minutos. Se você não pediu este código, ignore este e-mail.</p>
+    <p>Fabricio Roberto Reinert</p>
+  `.trim();
+
+  return { to: email, subject, text, html };
+}

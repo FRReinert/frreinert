@@ -5,17 +5,17 @@
       "photos": {
         "ana-pedro-001": {
           "title": "Entrada da noiva",
-          "price": 25,
+          "price": 6,
           "highresKey": "eventos/casamento-ana-pedro/ana-pedro-001.jpg"
         },
         "ana-pedro-002": {
           "title": "Beijo",
-          "price": 25,
+          "price": 6,
           "highresKey": "eventos/casamento-ana-pedro/ana-pedro-002.jpg"
         },
         "ana-pedro-003": {
           "title": "Festa",
-          "price": 30,
+          "price": 6,
           "highresKey": "eventos/casamento-ana-pedro/ana-pedro-003.jpg"
         }
       }

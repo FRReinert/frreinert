@@ -65,6 +65,7 @@ export function cartCount(items: CartItem[]) {
 /** Payload mínimo — preço/highresKey resolvidos no Worker. */
 export type CheckoutPayload = {
   email: string;
+  emailProof: string;
   items: Array<{
     eventId: string;
     photoId: string;

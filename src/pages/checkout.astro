@@ -7,8 +7,7 @@ import { withBase } from '../lib/paths';
   <header class="mb-10 max-w-2xl">
     <h1 class="font-display text-4xl tracking-wide md:text-5xl">Checkout</h1>
     <p class="mt-4 text-muted">
-      Informe seu e-mail para receber o link das fotos após o pagamento. Depois finalize no Mercado
-      Pago.
+      Confirme seu e-mail com um código. Depois finalize o pagamento no Mercado Pago.
     </p>
   </header>
 
@@ -30,27 +29,63 @@ import { withBase } from '../lib/paths';
       </p>
     </div>
 
-    <label class="block space-y-2">
-      <span class="text-xs uppercase tracking-[0.2em] text-muted">E-mail</span>
-      <input
-        type="email"
-        name="email"
-        data-checkout-email
-        required
-        autocomplete="email"
-        placeholder="seu@email.com"
-        class="w-full border border-line/80 bg-transparent px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/60 focus:border-paper/50"
-      />
-      <span class="block text-sm text-muted">
-        Usamos este e-mail para enviar o link de download e o acesso a Minhas fotos.
-      </span>
-    </label>
+    <div class="space-y-4">
+      <label class="block space-y-2">
+        <span class="text-xs uppercase tracking-[0.2em] text-muted">E-mail</span>
+        <input
+          type="email"
+          name="email"
+          data-checkout-email
+          required
+          autocomplete="email"
+          placeholder="seu@email.com"
+          class="w-full border border-line/80 bg-transparent px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/60 focus:border-paper/50"
+        />
+      </label>
+
+      <button
+        type="button"
+        data-checkout-send-otp
+        class="border border-paper/40 px-5 py-2.5 text-xs uppercase tracking-[0.22em] text-paper transition hover:border-paper hover:bg-paper/5 disabled:opacity-50"
+      >
+        Enviar código
+      </button>
+
+      <div data-checkout-otp-step class="hidden space-y-4">
+        <label class="block space-y-2">
+          <span class="text-xs uppercase tracking-[0.2em] text-muted">Código de 6 dígitos</span>
+          <input
+            type="text"
+            name="otp"
+            data-checkout-otp
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            placeholder="000000"
+            class="w-full border border-line/80 bg-transparent px-4 py-3 text-sm tracking-[0.3em] text-paper outline-none transition placeholder:text-muted/60 focus:border-paper/50"
+          />
+        </label>
+        <button
+          type="button"
+          data-checkout-confirm-otp
+          class="border border-paper/40 px-5 py-2.5 text-xs uppercase tracking-[0.22em] text-paper transition hover:border-paper hover:bg-paper/5 disabled:opacity-50"
+        >
+          Confirmar e-mail
+        </button>
+      </div>
+
+      <p data-checkout-verified class="hidden text-sm text-muted" role="status">
+        E-mail confirmado. Você já pode pagar.
+      </p>
+    </div>
 
     <div class="border border-line/80 px-5 py-4 text-sm leading-relaxed text-muted">
       Você será direcionado ao Mercado Pago para pagar com Pix, cartão ou saldo. O processo é
       seguro e leva só alguns minutos.
     </div>
 
+    <p data-checkout-message class="hidden text-sm text-muted" role="status"></p>
     <p data-checkout-error class="hidden text-sm text-red-300" role="alert"></p>
 
     <div class="flex flex-wrap gap-4">
@@ -63,6 +98,7 @@ import { withBase } from '../lib/paths';
       <button
         type="button"
         data-checkout-pay
+        disabled
         class="border border-paper/40 px-6 py-3 text-xs uppercase tracking-[0.28em] text-paper transition hover:border-paper hover:bg-paper/5 disabled:opacity-50"
       >
         Ir para o pagamento
@@ -75,17 +111,27 @@ import { withBase } from '../lib/paths';
   import {
     cartCount,
     cartTotal,
+    clearCart,
     formatBRL,
     readCart,
     saveLastOrder,
     type CheckoutPayload,
   } from '../lib/cart';
-  import { createMercadoPagoCheckout } from '../lib/mercadopago';
+  import { CHECKOUT_API_BASE, createMercadoPagoCheckout } from '../lib/mercadopago';
+
+  const PROOF_KEY = 'frreinert-email-proof-v1';
+
+  type StoredProof = { email: string; emailProof: string; expiresAt: number };
 
   function friendlyError(message: string) {
     const lower = message.toLowerCase();
+    if (lower.includes('código') || lower.includes('codigo') || lower.includes('confirma')) {
+      return message;
+    }
     if (lower.includes('e-mail') || lower.includes('email')) {
-      return 'Informe um e-mail válido para continuar.';
+      return message.includes('Confirme') || message.includes('confirmação') || message.includes('Confirmação')
+        ? message
+        : 'Informe um e-mail válido para continuar.';
     }
     if (lower.includes('token') || lower.includes('501') || lower.includes('configured')) {
       return 'O pagamento está temporariamente indisponível. Tente de novo em instantes.';
@@ -96,7 +142,70 @@ import { withBase } from '../lib/paths';
     if (lower.includes('carrinho')) {
       return 'Seu carrinho está vazio.';
     }
-    return 'Não foi possível iniciar o pagamento. Tente novamente em alguns minutos.';
+    return message || 'Não foi possível iniciar o pagamento. Tente novamente em alguns minutos.';
+  }
+
+  function showError(text: string) {
+    const errorEl = document.querySelector<HTMLElement>('[data-checkout-error]');
+    const messageEl = document.querySelector<HTMLElement>('[data-checkout-message]');
+    if (messageEl) messageEl.classList.add('hidden');
+    if (!errorEl) return;
+    errorEl.textContent = text;
+    errorEl.classList.remove('hidden');
+  }
+
+  function showMessage(text: string) {
+    const errorEl = document.querySelector<HTMLElement>('[data-checkout-error]');
+    const messageEl = document.querySelector<HTMLElement>('[data-checkout-message]');
+    if (errorEl) errorEl.classList.add('hidden');
+    if (!messageEl) return;
+    messageEl.textContent = text;
+    messageEl.classList.remove('hidden');
+  }
+
+  function readProof(): StoredProof | null {
+    try {
+      const raw = sessionStorage.getItem(PROOF_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw) as StoredProof;
+      if (!data.emailProof || !data.email || data.expiresAt < Date.now()) {
+        sessionStorage.removeItem(PROOF_KEY);
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeProof(email: string, emailProof: string, expiresIn: number) {
+    const data: StoredProof = {
+      email,
+      emailProof,
+      expiresAt: Date.now() + expiresIn * 1000,
+    };
+    sessionStorage.setItem(PROOF_KEY, JSON.stringify(data));
+    return data;
+  }
+
+  function clearProof() {
+    sessionStorage.removeItem(PROOF_KEY);
+  }
+
+  function setVerifiedUi(email: string) {
+    const emailInput = document.querySelector<HTMLInputElement>('[data-checkout-email]');
+    const otpStep = document.querySelector<HTMLElement>('[data-checkout-otp-step]');
+    const verified = document.querySelector<HTMLElement>('[data-checkout-verified]');
+    const pay = document.querySelector<HTMLButtonElement>('[data-checkout-pay]');
+    const sendOtp = document.querySelector<HTMLButtonElement>('[data-checkout-send-otp]');
+    if (emailInput) {
+      emailInput.value = email;
+      emailInput.readOnly = true;
+    }
+    otpStep?.classList.add('hidden');
+    verified?.classList.remove('hidden');
+    if (pay) pay.disabled = false;
+    if (sendOtp) sendOtp.textContent = 'Reenviar código';
   }
 
   function refresh() {
@@ -117,27 +226,111 @@ import { withBase } from '../lib/paths';
     ready.classList.remove('hidden');
     count.textContent = String(cartCount(items));
     total.textContent = formatBRL(cartTotal(items));
+
+    const proof = readProof();
+    if (proof) setVerifiedUi(proof.email);
   }
 
-  document.querySelector('[data-checkout-pay]')?.addEventListener('click', async () => {
-    const button = document.querySelector<HTMLButtonElement>('[data-checkout-pay]');
-    const errorEl = document.querySelector<HTMLElement>('[data-checkout-error]');
+  document.querySelector('[data-checkout-send-otp]')?.addEventListener('click', async () => {
     const emailInput = document.querySelector<HTMLInputElement>('[data-checkout-email]');
-    if (!button || !errorEl || !emailInput) return;
-
-    const items = readCart();
-    if (items.length === 0) return;
+    const sendBtn = document.querySelector<HTMLButtonElement>('[data-checkout-send-otp]');
+    const otpStep = document.querySelector<HTMLElement>('[data-checkout-otp-step]');
+    const verified = document.querySelector<HTMLElement>('[data-checkout-verified]');
+    const pay = document.querySelector<HTMLButtonElement>('[data-checkout-pay]');
+    if (!emailInput || !sendBtn || !otpStep || !pay) return;
 
     const email = emailInput.value.trim();
     if (!email || !emailInput.checkValidity()) {
       emailInput.reportValidity();
-      errorEl.textContent = 'Informe um e-mail válido para continuar.';
-      errorEl.classList.remove('hidden');
+      showError('Informe um e-mail válido para continuar.');
+      return;
+    }
+
+    clearProof();
+    emailInput.readOnly = false;
+    verified?.classList.add('hidden');
+    pay.disabled = true;
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Enviando…';
+
+    try {
+      const res = await fetch(`${CHECKOUT_API_BASE}/api/auth/email-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error || 'fail');
+      otpStep.classList.remove('hidden');
+      showMessage(data.message || 'Enviamos um código para o seu e-mail.');
+    } catch (err) {
+      showError(friendlyError(err instanceof Error ? err.message : 'Falha ao enviar código.'));
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Enviar código';
+    }
+  });
+
+  document.querySelector('[data-checkout-confirm-otp]')?.addEventListener('click', async () => {
+    const emailInput = document.querySelector<HTMLInputElement>('[data-checkout-email]');
+    const otpInput = document.querySelector<HTMLInputElement>('[data-checkout-otp]');
+    const confirmBtn = document.querySelector<HTMLButtonElement>('[data-checkout-confirm-otp]');
+    if (!emailInput || !otpInput || !confirmBtn) return;
+
+    const email = emailInput.value.trim();
+    const code = otpInput.value.replace(/\s+/g, '').trim();
+    if (!/^\d{6}$/.test(code)) {
+      showError('Digite o código de 6 dígitos enviado por e-mail.');
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Confirmando…';
+
+    try {
+      const res = await fetch(`${CHECKOUT_API_BASE}/api/auth/email-otp/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        emailProof?: string;
+        email?: string;
+        expiresIn?: number;
+        error?: string;
+      };
+      if (!res.ok || !data.emailProof || !data.email) {
+        throw new Error(data.error || 'Código inválido.');
+      }
+      writeProof(data.email, data.emailProof, data.expiresIn || 60 * 30);
+      setVerifiedUi(data.email);
+      showMessage('E-mail confirmado.');
+    } catch (err) {
+      showError(friendlyError(err instanceof Error ? err.message : 'Código inválido.'));
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirmar e-mail';
+    }
+  });
+
+  document.querySelector('[data-checkout-pay]')?.addEventListener('click', async () => {
+    const button = document.querySelector<HTMLButtonElement>('[data-checkout-pay]');
+    if (!button) return;
+
+    const items = readCart();
+    if (items.length === 0) return;
+
+    const proof = readProof();
+    if (!proof) {
+      showError('Confirme seu e-mail antes de pagar.');
+      button.disabled = true;
       return;
     }
 
     const payload: CheckoutPayload = {
-      email,
+      email: proof.email,
+      emailProof: proof.emailProof,
       items: items.map((item) => ({
         eventId: item.eventId,
         photoId: item.photoId,
@@ -146,20 +339,35 @@ import { withBase } from '../lib/paths';
 
     button.disabled = true;
     button.textContent = 'Abrindo pagamento…';
-    errorEl.classList.add('hidden');
+    document.querySelector<HTMLElement>('[data-checkout-error]')?.classList.add('hidden');
 
     const result = await createMercadoPagoCheckout(payload);
 
     if (result.ok) {
       saveLastOrder(result.externalReference, items, cartTotal(items));
+      clearCart();
+      clearProof();
       window.location.href = result.initPoint;
       return;
     }
 
     button.disabled = false;
     button.textContent = 'Ir para o pagamento';
-    errorEl.textContent = friendlyError(result.error);
-    errorEl.classList.remove('hidden');
+    showError(friendlyError(result.error));
+  });
+
+  document.querySelector('[data-checkout-email]')?.addEventListener('input', () => {
+    const proof = readProof();
+    const emailInput = document.querySelector<HTMLInputElement>('[data-checkout-email]');
+    if (!proof || !emailInput) return;
+    if (emailInput.value.trim().toLowerCase() !== proof.email) {
+      clearProof();
+      const pay = document.querySelector<HTMLButtonElement>('[data-checkout-pay]');
+      const verified = document.querySelector<HTMLElement>('[data-checkout-verified]');
+      if (pay) pay.disabled = true;
+      verified?.classList.add('hidden');
+      emailInput.readOnly = false;
+    }
   });
 
   refresh();

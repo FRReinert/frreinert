@@ -31,10 +31,11 @@ npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
 
 ## Fluxo do cliente
 
-1. Checkout informa **e-mail** → Worker grava pedido em KV + índice `email:{email}`
-2. Paga no Mercado Pago (pode ficar no comprovante sem voltar ao site)
-3. Webhook marca `approved` e envia e-mail com link do pedido + Minhas fotos
-4. Em `/minhas-fotos/` o cliente pede um magic link → confirma em `/minhas-fotos/acesso/` → biblioteca com downloads
+1. Checkout informa **e-mail** → recebe OTP → confirma → Worker grava pedido em KV + índice `email:{email}`
+2. Carrinho é zerado ao abrir o Mercado Pago (mesmo se não voltar ao site)
+3. Paga no Mercado Pago (pode ficar no comprovante sem voltar ao site)
+4. Webhook marca `approved` e envia e-mail com link do pedido + Minhas fotos
+5. Em `/minhas-fotos/` o cliente pede um magic link → confirma em `/minhas-fotos/acesso/` → biblioteca com downloads
 
 ## Secrets / vars do Worker
 

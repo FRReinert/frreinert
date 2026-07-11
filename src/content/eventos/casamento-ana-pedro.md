@@ -8,17 +8,17 @@ photos:
   - id: ana-pedro-001
     title: Entrada da noiva
     preview: /images/uploads/placeholder.svg
-    price: 25
+    price: 6
     highresKey: eventos/casamento-ana-pedro/ana-pedro-001.jpg
   - id: ana-pedro-002
     title: Beijo
     preview: /images/uploads/placeholder.svg
-    price: 25
+    price: 6
     highresKey: eventos/casamento-ana-pedro/ana-pedro-002.jpg
   - id: ana-pedro-003
     title: Festa
     preview: /images/uploads/placeholder.svg
-    price: 30
+    price: 6
     highresKey: eventos/casamento-ana-pedro/ana-pedro-003.jpg
 ---
 

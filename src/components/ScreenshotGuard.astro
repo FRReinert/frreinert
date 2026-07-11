@@ -1,0 +1,174 @@
+---
+---
+
+<div
+  class="screenshot-guard-overlay"
+  data-screenshot-overlay
+  aria-hidden="true"
+></div>
+
+<style>
+  .screenshot-guard-overlay {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: color-mix(in srgb, var(--color-ink) 60%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    opacity: 0;
+    transition: opacity 100ms ease;
+  }
+
+  :global(body.screenshot-guard-on) .screenshot-guard-overlay {
+    opacity: 1;
+  }
+
+  :global(body.screenshot-guard-on) :global(main img) {
+    filter: blur(24px);
+    transition: filter 100ms ease;
+  }
+
+  :global(html[data-screenshot-guard]) :global(main img) {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+</style>
+
+<script>
+  const BODY_CLASS = 'screenshot-guard-on';
+  const LONG_PRESS_MS = 400;
+
+  let armed = false;
+  let keyLock = false;
+  let touchLock = false;
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function lock() {
+    if (armed) return;
+    armed = true;
+    document.body.classList.add(BODY_CLASS);
+  }
+
+  function unlock() {
+    if (!armed) return;
+    if (keyLock || touchLock) return;
+    if (document.hidden || !document.hasFocus()) return;
+    armed = false;
+    document.body.classList.remove(BODY_CLASS);
+  }
+
+  function tryUnlock() {
+    keyLock = false;
+    touchLock = false;
+    unlock();
+  }
+
+  function onVisibility() {
+    if (document.hidden) {
+      lock();
+    } else {
+      tryUnlock();
+    }
+  }
+
+  function onBlur() {
+    lock();
+  }
+
+  function onFocus() {
+    tryUnlock();
+  }
+
+  function onPageHide() {
+    lock();
+  }
+
+  function onPageShow() {
+    tryUnlock();
+  }
+
+  function onFreeze() {
+    lock();
+  }
+
+  function isGuardKey(e: KeyboardEvent) {
+    if (e.key === 'Meta' || e.key === 'OS' || e.key === 'PrintScreen') return true;
+    if (e.metaKey && e.shiftKey) return true;
+    if (e.ctrlKey && e.shiftKey && (e.key === 's' || e.key === 'S')) return true;
+    return false;
+  }
+
+  function onKeyDown(e: KeyboardEvent) {
+    if (!isGuardKey(e)) return;
+    keyLock = true;
+    lock();
+  }
+
+  function onKeyUp(e: KeyboardEvent) {
+    if (e.key === 'Meta' || e.key === 'OS') {
+      keyLock = false;
+      unlock();
+      return;
+    }
+    if (e.key === 'PrintScreen') {
+      // Keep blur briefly so the capture is more likely obscured
+      window.setTimeout(() => {
+        keyLock = false;
+        unlock();
+      }, 500);
+    }
+  }
+
+  function clearLongPressTimer() {
+    if (longPressTimer !== null) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  function onTouchStart(e: TouchEvent) {
+    const target = e.target;
+    if (!(target instanceof Element) || !target.closest('main img')) return;
+
+    clearLongPressTimer();
+    longPressTimer = setTimeout(() => {
+      touchLock = true;
+      lock();
+    }, LONG_PRESS_MS);
+  }
+
+  function onTouchEnd() {
+    clearLongPressTimer();
+    if (touchLock) {
+      touchLock = false;
+      unlock();
+    }
+  }
+
+  function onContextMenu(e: Event) {
+    const target = e.target;
+    if (!(target instanceof Element) || !target.closest('main img')) return;
+    e.preventDefault();
+  }
+
+  document.documentElement.setAttribute('data-screenshot-guard', '');
+
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('blur', onBlur);
+  window.addEventListener('focus', onFocus);
+  window.addEventListener('pagehide', onPageHide);
+  window.addEventListener('pageshow', onPageShow);
+  document.addEventListener('freeze', onFreeze);
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
+  document.addEventListener('contextmenu', onContextMenu);
+
+  if ('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches) {
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('touchcancel', onTouchEnd);
+  }
+</script>

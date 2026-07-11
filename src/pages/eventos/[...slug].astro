@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import AddToCartButton from '../../components/AddToCartButton.astro';
+import ScreenshotGuard from '../../components/ScreenshotGuard.astro';
 import { assetUrl, withBase } from '../../lib/paths';
 import { formatBRL } from '../../lib/cart';
 
@@ -23,7 +24,7 @@ const { Content } = await render(item);
       <a href={withBase('eventos/')} class="transition hover:text-paper">← Eventos</a>
     </p>
 
-    <figure class="mb-10 -mx-5 md:mx-0">
+    <figure class="mb-10">
       <img
         src={assetUrl(item.data.cover)}
         alt={item.data.title}
@@ -89,4 +90,5 @@ const { Content } = await render(item);
       }
     </section>
   </article>
+  <ScreenshotGuard />
 </Layout>

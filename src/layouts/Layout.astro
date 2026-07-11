@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { withBase } from '../lib/paths';
 import CartBadge from '../components/CartBadge.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 
 interface Props {
   title?: string;
@@ -30,31 +31,33 @@ const {
     />
     <title>{title}</title>
   </head>
-  <body class="min-h-screen bg-ink text-paper">
+  <body class="flex min-h-screen flex-col bg-ink text-paper">
     <header class="relative z-50 w-full border-b border-line/80 bg-ink">
-      <nav class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-6 md:px-8">
+      <nav
+        class="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between md:gap-8 md:px-8 md:py-6"
+      >
         <a
           href={withBase()}
-          class="font-display text-2xl tracking-[0.04em] text-paper md:text-3xl"
+          class="shrink-0 font-display text-2xl tracking-[0.04em] text-paper md:text-3xl"
         >
           Fabricio Reinert
         </a>
-        <div class="flex items-center gap-6">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 md:gap-6">
           <a
             href={withBase('publicacoes/')}
-            class="text-xs uppercase tracking-[0.22em] text-paper/80 transition hover:text-paper"
+            class="text-[0.65rem] uppercase tracking-[0.14em] text-paper/80 transition hover:text-paper md:text-xs md:tracking-[0.22em]"
           >
             Publicações
           </a>
           <a
             href={withBase('eventos/')}
-            class="text-xs uppercase tracking-[0.22em] text-paper/80 transition hover:text-paper"
+            class="text-[0.65rem] uppercase tracking-[0.14em] text-paper/80 transition hover:text-paper md:text-xs md:tracking-[0.22em]"
           >
             Eventos
           </a>
           <a
             href={withBase('minhas-fotos/')}
-            class="text-xs uppercase tracking-[0.22em] text-paper/80 transition hover:text-paper"
+            class="text-[0.65rem] uppercase tracking-[0.14em] text-paper/80 transition hover:text-paper md:text-xs md:tracking-[0.22em]"
           >
             Minhas fotos
           </a>
@@ -63,17 +66,42 @@ const {
       </nav>
     </header>
 
-    <main class="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
+    <main class="mx-auto w-full max-w-6xl flex-1 px-5 py-12 md:px-8 md:py-16">
       <slot />
     </main>
 
-    <footer class="border-t border-line/80">
-      <div class="mx-auto flex max-w-6xl flex-wrap gap-5 px-5 py-10 text-xs uppercase tracking-[0.18em] text-muted md:px-8">
-        <a href={withBase('publicacoes/')} class="hover:text-paper">Publicações</a>
-        <a href={withBase('eventos/')} class="hover:text-paper">Eventos</a>
-        <a href={withBase('minhas-fotos/')} class="hover:text-paper">Minhas fotos</a>
-        <a href={withBase('carrinho/')} class="hover:text-paper">Carrinho</a>
-      </div>
-    </footer>
+    <SiteFooter />
+
+    <button
+      type="button"
+      data-back-to-top
+      class="fixed bottom-5 right-5 z-50 flex h-10 w-10 items-center justify-center border border-line/80 bg-ink text-paper opacity-0 pointer-events-none transition hover:border-paper/50 hover:text-paper focus-visible:opacity-100 focus-visible:pointer-events-auto"
+      aria-label="Voltar ao topo"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path
+          d="M3 10.5 8 5.5l5 5"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
+      </svg>
+    </button>
+
+    <script>
+      const btn = document.querySelector<HTMLButtonElement>('[data-back-to-top]');
+      if (btn) {
+        const toggle = () => {
+          const show = window.scrollY > 320;
+          btn.classList.toggle('opacity-0', !show);
+          btn.classList.toggle('pointer-events-none', !show);
+        };
+        window.addEventListener('scroll', toggle, { passive: true });
+        toggle();
+        btn.addEventListener('click', () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+    </script>
   </body>
 </html>

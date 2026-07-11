@@ -27,14 +27,14 @@ gallery:
   - /images/uploads/scrl_0122.jpg
 audio_file: /audio/vava-ribeiro-calmaria-v2.mp3
 ---
-Por muitos anos as festas culturais da região se tornaram mais tradicionais do que as tradições que elas tentam resgatar. Festas alemãs e italianas emulando os costumes antigo, resgatando o jeito de se vestir e se divertir, criando a partir destes costumes um tipo de pseudo nostalgia.
+Por muitos anos, as festas culturais da região se tornaram mais tradicionais do que as próprias tradições que tentam resgatar. Festas alemãs e italianas emulando os costumes antigos, resgatando o jeito de se vestir e se divertir, criando, a partir desses costumes, um tipo de pseudo-nostalgia.
 
-Mas pouco a pouco o que estava no prato dos antigos imigrantes começa a ser artigo de luxo. Não vemos mais uma polenta na tábua servida com galinha velha no dia-a-dia do rio cedrense. Isso você vai encontrar no restaurante, assim como Spätzle alemão ja não faz mais parte do dia-a-dia do pomerodense. E aos poucos as festas acabam sendo um resgate cultural.
+Mas, pouco a pouco, o que estava no prato dos antigos imigrantes começa a ser artigo de luxo. Não vemos mais uma polenta na tábua servida com galinha velha no dia a dia do rio-cedrense. Isso você vai encontrar no restaurante, assim como o Spätzle alemão já não faz mais parte do dia a dia do pomerodense. E, aos poucos, as festas acabam sendo um resgate cultural.
 
-Na pratica, isso nunca irá mudar, o piauiense que vem para Timbó não achará maniva pra venda no mercado e logo não irá fazer uma maniçoba com tanta frequencia. Ou todas variedades de goma que estavam acostumado. E aos poucos, a tradição vira lembrança, vira saudade. Os filhos ou netos destes emigrantes logo não terão mais os costumes de seus pais.
+Na prática, isso nunca irá mudar. O piauiense que vem para Timbó não achará maniva para venda no mercado e, logo, não irá fazer uma maniçoba com tanta frequência. Ou as variedades de goma com as quais estava acostumado. E, aos poucos, a tradição vira lembrança, vira saudade. Os filhos ou netos desses imigrantes logo não terão mais os costumes de seus pais.
 
-E assim surgiu para surpresa de muitos a festa junina de Timbó, confesso que eu não esperava por isso. Uma festa com gastronomia e apresentações culturais nortistas, onde pude provar alguns pratos típicos que apenas havia ouvido falar.
+E assim surgiu, para surpresa de muitos, a festa junina de Timbó. Confesso que eu não esperava por isso. Uma festa com gastronomia e apresentações culturais nortistas, onde pude provar alguns pratos típicos que apenas havia ouvido falar.
 
-Aos poucos as tradições antigas dos meus antepassados começam a se fundir com as tradições dos nossos novos vizinhos e uma troca cultural acontece.
+Aos poucos, as tradições antigas dos meus antepassados começam a se fundir com as tradições dos nossos novos vizinhos, e uma troca cultural acontece.
 
-Foi um prazer registrar em fotos um pouco deste evento, infelizmente a chuva atrapalhou um pouco esta edição do evento e não pude ir todos os dias e registrar mais deste evento, mas deixo um espaço em meu acervo para o que, espero, seja a primeira de muitas outras festas culturais nortistas da região.
+Foi um prazer registrar em fotos um pouco deste evento. Infelizmente, a chuva atrapalhou um pouco esta edição, e não pude ir todos os dias e registrar mais deste evento, mas deixo um espaço em meu acervo para o que, espero, seja a primeira de muitas outras festas culturais nortistas da região.

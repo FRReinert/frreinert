@@ -1,11 +1,15 @@
 backend:
+  # Em produção o admin/index.html força github + OAuth.
+  # Em localhost força git-gateway + decap-server (grava no disco).
   name: github
   repo: FRReinert/frreinert
   branch: main
-  # OAuth próprio (Cloudflare Worker) — GitHub Pages não usa api.netlify.com
   base_url: https://frreinert-decap-oauth.fabricio-reinert.workers.dev
   auth_endpoint: auth
   site_domain: frreinert.github.io
+
+# Usado só quando o proxy local (npm run cms) está ativo — ver admin/index.html
+local_backend: true
 
 media_folder: public/images/uploads
 public_folder: /images/uploads
@@ -25,11 +29,15 @@ collections:
         name: gallery
         widget: list
         required: false
+        label_singular: foto
+        summary: "{{fields.image}}"
+        hint: "Adicione uma foto por vez com “Add foto”. A galeria pode ter várias imagens."
         field: { label: Imagem, name: image, widget: image }
       - label: Vídeos
         name: videos
         widget: list
         required: false
+        label_singular: vídeo
         field:
           {
             label: URL ou caminho,

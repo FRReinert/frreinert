@@ -12,7 +12,8 @@
     "astro": "astro",
     "sync-catalog": "node scripts/sync-catalog.mjs",
     "ingest-photos": "node scripts/ingest-event-photos.mjs",
-    "optimize-images": "node scripts/optimize-blog-images.mjs"
+    "optimize-images": "node scripts/optimize-blog-images.mjs",
+    "cms": "npx --yes decap-server"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",

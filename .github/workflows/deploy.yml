@@ -32,7 +32,7 @@ jobs:
 
       - name: Build
         env:
-          PUBLIC_MEDIA_BASE: https://frreinert-media.fabricio-reinert.workers.dev
+          PUBLIC_MEDIA_BASE: https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev
         run: npm run build
 
       - name: Upload Pages artifact

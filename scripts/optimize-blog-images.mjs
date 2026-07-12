@@ -1,22 +1,19 @@
 #!/usr/bin/env node
 /**
- * Otimiza fotos de alta resolução para upload no admin (Decap).
- * Redimensiona e comprime em JPEG pronto para web — sem gravar no site.
+ * Otimiza fotos de alta resolução para JPEG web (sem marca d'água).
+ * Utilitário fino — para publicar no site use: npm run publish:post
  *
  * Uso:
  *   npm run optimize-images -- --dir ./minhas-fotos
  *   npm run optimize-images -- --dir ./minhas-fotos --out ./prontas
  */
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import sharp from 'sharp';
+import { optimizeImagesDir } from './lib/optimize-images.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
-
-const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff']);
 
 function parseArgs(argv) {
   const out = {
@@ -64,7 +61,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`
-Otimiza imagens para upload no admin do site (JPEG web, sem marca d'água).
+Otimiza imagens para JPEG web (sem marca d'água).
 
   npm run optimize-images -- --dir ./minhas-fotos
   npm run optimize-images -- --dir ./minhas-fotos --out ./prontas
@@ -77,57 +74,9 @@ Flags:
   --dry-run          Só lista o que faria
   --help             Esta ajuda
 
-Depois: suba os arquivos de --out pelo admin (/admin/) na publicação.
+Para publicar no site (R2 + markdown), prefira:
+  npm run publish:post -- --dir … --slug … --title … --description …
 `);
-}
-
-function slugifyStem(name) {
-  return name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'foto';
-}
-
-function listImages(dir) {
-  return fs
-    .readdirSync(dir)
-    .filter((name) => IMAGE_EXT.has(path.extname(name).toLowerCase()))
-    .filter((name) => !name.startsWith('.'))
-    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
-}
-
-function formatBytes(n) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-async function optimizeOne(inputPath, outputPath, { maxEdge, quality, dryRun }) {
-  const inputSize = fs.statSync(inputPath).size;
-
-  if (dryRun) {
-    console.log(`  [dry-run] ${path.basename(inputPath)} → ${path.basename(outputPath)}`);
-    return { inputSize, outputSize: 0 };
-  }
-
-  await sharp(inputPath, { failOn: 'none', unlimited: true })
-    .rotate()
-    .resize({
-      width: maxEdge,
-      height: maxEdge,
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality, mozjpeg: true })
-    .toFile(outputPath);
-
-  const outputSize = fs.statSync(outputPath).size;
-  console.log(
-    `  ${path.basename(inputPath)}  ${formatBytes(inputSize)} → ${formatBytes(outputSize)}  (${path.basename(outputPath)})`,
-  );
-  return { inputSize, outputSize };
 }
 
 async function main() {
@@ -164,45 +113,15 @@ async function main() {
     process.exit(1);
   }
 
-  const images = listImages(inputDir);
-  if (!images.length) {
-    console.error(`Erro: nenhuma imagem em ${inputDir}`);
-    process.exit(1);
-  }
-
-  console.log(`Entrada: ${inputDir} (${images.length} arquivo(s))`);
+  console.log(`Entrada: ${inputDir}`);
   console.log(`Saída:   ${outDir}`);
   console.log(`JPEG max ${args.maxEdge}px · qualidade ${args.quality}`);
   if (args.dryRun) console.log('(dry-run)\n');
 
-  if (!args.dryRun) {
-    fs.mkdirSync(outDir, { recursive: true });
-  }
-
-  let totalIn = 0;
-  let totalOut = 0;
-  const used = new Set();
-
-  for (const file of images) {
-    let stem = slugifyStem(path.parse(file).name);
-    let n = 2;
-    while (used.has(stem)) {
-      stem = `${slugifyStem(path.parse(file).name)}-${n++}`;
-    }
-    used.add(stem);
-
-    const result = await optimizeOne(
-      path.join(inputDir, file),
-      path.join(outDir, `${stem}.jpg`),
-      args,
-    );
-    totalIn += result.inputSize;
-    totalOut += result.outputSize;
-  }
+  await optimizeImagesDir(inputDir, outDir, args);
 
   if (!args.dryRun) {
-    console.log(`\nTotal: ${formatBytes(totalIn)} → ${formatBytes(totalOut)}`);
-    console.log('Pronto. Envie esses JPEGs pelo admin (/admin/) na publicação.');
+    console.log('\nPronto. Para publicar: npm run publish:post -- --dir … --slug …');
   }
 }
 

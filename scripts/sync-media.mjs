@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
- * Espelha public/images e public/audio → R2 bucket frreinert-media.
+ * @deprecated Prefer `npm run publish:post` (upload + markdown em um comando).
+ * Este script ainda espelha public/images e public/audio → R2 frreinert-media
+ * para fluxos legados (upload a partir de public/ + prune). Remoção planejada após cutover (passo 07).
  *
  * Uso:
  *   npm run sync-media
  *   npm run sync-media -- --dry-run
- *   npm run sync-media -- --prune   # sobe e remove binários do Git/working tree
+ *   npm run sync-media -- --prune
  *
  * Requer wrangler autenticado (npx wrangler login) na conta que tem o bucket.
  */
@@ -13,30 +15,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { putR2Object, contentTypeFor, R2_MEDIA_BUCKET } from './lib/r2-put.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
-const workerDir = path.join(root, 'workers/frreinert-media');
-const BUCKET = 'frreinert-media';
+const BUCKET = R2_MEDIA_BUCKET;
 
 const ROOTS = [
   { local: path.join(root, 'public/images'), keyPrefix: 'images' },
   { local: path.join(root, 'public/audio'), keyPrefix: 'audio' },
 ];
-
-const CONTENT_TYPES = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.mp3': 'audio/mpeg',
-  '.m4a': 'audio/mp4',
-  '.ogg': 'audio/ogg',
-  '.opus': 'audio/ogg',
-  '.wav': 'audio/wav',
-};
 
 /** Keep these in Git (small static assets). */
 const KEEP_RELATIVE = new Set([
@@ -49,7 +37,7 @@ const KEEP_RELATIVE = new Set([
   'public/audio/.gitkeep',
 ]);
 
-const GITIGNORE_BLOCK = `# Heavy media — staged by Decap, then synced to R2 (npm run sync-media -- --prune)
+const GITIGNORE_BLOCK = `# Heavy media — prefer npm run publish:post (mídia só no R2)
 public/images/uploads/**
 !public/images/uploads/.gitkeep
 !public/images/uploads/placeholder.svg
@@ -59,6 +47,12 @@ public/audio/**
 
 const dryRun = process.argv.includes('--dry-run');
 const prune = process.argv.includes('--prune');
+
+if (!process.argv.includes('--quiet-deprecation')) {
+  console.warn(
+    '[deprecated] sync-media: use `npm run publish:post` para publicações. Este comando permanece só para legado/prune.\n',
+  );
+}
 
 function walkFiles(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -70,43 +64,6 @@ function walkFiles(dir) {
     else out.push(full);
   }
   return out;
-}
-
-function contentTypeFor(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  return CONTENT_TYPES[ext] || 'application/octet-stream';
-}
-
-function putObject(localFile, objectKey, contentType) {
-  if (dryRun) {
-    console.log(`[dry-run] put ${BUCKET}/${objectKey} ← ${path.relative(root, localFile)}`);
-    return;
-  }
-
-  const result = spawnSync(
-    'npx',
-    [
-      'wrangler',
-      'r2',
-      'object',
-      'put',
-      `${BUCKET}/${objectKey}`,
-      `--file=${localFile}`,
-      `--content-type=${contentType}`,
-      '--remote',
-    ],
-    {
-      cwd: workerDir,
-      encoding: 'utf8',
-      shell: process.platform === 'win32',
-    },
-  );
-
-  if (result.status !== 0) {
-    const err = (result.stderr || result.stdout || '').trim();
-    throw new Error(`Falha no upload R2 (${objectKey}): ${err || `exit ${result.status}`}`);
-  }
-  console.log(`ok  ${objectKey}`);
 }
 
 function ensureGitignore() {
@@ -129,7 +86,6 @@ function ensureGitignore() {
 function shouldPruneLocal(filePath) {
   const rel = path.relative(root, filePath).split(path.sep).join('/');
   if (KEEP_RELATIVE.has(rel)) return false;
-  // Only prune CMS uploads + audio binaries (not payment icons etc.)
   if (rel.startsWith('public/images/uploads/')) return true;
   if (rel.startsWith('public/audio/')) return true;
   return false;
@@ -182,7 +138,7 @@ function main() {
     for (const file of files) {
       const rel = path.relative(local, file).split(path.sep).join('/');
       const key = `${keyPrefix}/${rel}`;
-      putObject(file, key, contentTypeFor(file));
+      putR2Object(file, key, { dryRun, contentType: contentTypeFor(file) });
       synced.push(file);
       count += 1;
     }

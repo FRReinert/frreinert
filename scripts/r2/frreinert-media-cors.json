@@ -1,0 +1,24 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://frreinert.github.io",
+          "http://localhost:4321",
+          "http://127.0.0.1:4321"
+        ],
+        "methods": ["GET", "HEAD"],
+        "headers": ["Range", "Content-Type", "Origin", "Accept"]
+      },
+      "exposeHeaders": [
+        "Content-Length",
+        "Content-Range",
+        "Accept-Ranges",
+        "Content-Type",
+        "ETag",
+        "Cache-Control"
+      ],
+      "maxAgeSeconds": 86400
+    }
+  ]
+}

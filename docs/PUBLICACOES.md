@@ -1,186 +1,175 @@
 # Como publicar uma nova Publicação
 
-Guia operacional: do CMS até a página no ar, com mídia no R2 e **sem** deixar binários pesados no GitHub.
+Guia operacional pós-migração. Um comando sobe a mídia ao R2 e gera o Markdown; o Git só versiona o `.md`.
 
 ## Visão rápida
 
 ```text
-Otimizar fotos/áudio → Publicar no Decap → sync-media:prune → commit limpeza → push → conferir site
+npm run publish:post -- … → git push do .md → conferir site
 ```
 
-| O que fica no Git | O que vai para o R2 |
+| O que fica no Git | O que vai para o R2 (`frreinert-media`) |
 | --- | --- |
 | Markdown em `src/content/publicacoes/` | Fotos em `images/uploads/...` |
 | Paths no frontmatter (`cover`, `gallery`, `audio_file`) | Áudio em `audio/...` |
 
-Em produção as URLs de mídia usam o Worker `https://frreinert-media.fabricio-reinert.workers.dev` (`PUBLIC_MEDIA_BASE`).
+Em produção (e no `npm run dev` com `.env`), as URLs usam `PUBLIC_MEDIA_BASE` — CDN R2 **sem** Worker:
+
+```text
+https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev
+```
+
+(mesmo valor em `.env.example` e no workflow de deploy)
+
+**Eventos (fotos à venda) são outro fluxo:** `npm run publish:evento` — ver [COMMERCE.md](./COMMERCE.md).
 
 ---
 
-## 0. Pré-requisitos (uma vez)
-
-No Mac, na pasta do repo:
+## Pré-requisitos (uma vez)
 
 ```sh
 npm install
-npx wrangler login   # conta Cloudflare que tem o bucket frreinert-media
-cp .env.example .env # para ver mídia no `npm run dev`
-```
-
-Confirme que o Worker de mídia está no ar (só precisa redeploy se mudar o código em `workers/frreinert-media`).
-
----
-
-## 1. Preparar as fotos
-
-Use JPEG web, sem marca d’água (marca d’água é só para fotos à venda em eventos).
-
-```sh
-npm run optimize-images -- --dir ./minhas-fotos
-# saída padrão: ./minhas-fotos/optimized
-```
-
-Flags úteis: `--out ./prontas`, `--max-edge 2048`, `--quality 85`.
-
-**Nomes:** prefira ASCII (`scrl-0122.jpg`), sem acentos nem espaços.
-
----
-
-## 2. Preparar o áudio (se houver trilha)
-
-O player só toca **MP3 real** (ou OGG). Arquivo baixado do YouTube com extensão `.mp3` muitas vezes é DASH/fMP4 e **não toca** no site.
-
-```sh
-# Se o arquivo for suspeito, converta:
-ffmpeg -i entrada.qualquer -vn -codec:a libmp3lame -qscale:a 2 public/audio/nome-da-faixa.mp3
-```
-
-**Regras:**
-
-- Nome **só ASCII**: `vava-ribeiro-calmaria.mp3` (sem `á`, espaços, etc.)
-- Extensão `.mp3` e conteúdo MP3 de verdade (`file arquivo.mp3` deve dizer MPEG / layer III)
-- Direitos de uso da faixa são seus
-
-Spotify no CMS é só preview (~30s). Prefira o campo **Áudio da publicação** para loop completo.
-
----
-
-## 3. Criar a publicação no Decap
-
-### Opção A — Admin em produção (GitHub)
-
-1. Abra `https://frreinert.github.io/frreinert/admin/` e autentique.
-2. **Publicações → New Publicações**.
-3. Preencha:
-   - **Título**
-   - **Slug (URL):** só `a-z`, `0-9` e hífen — ex. `sao-joao-timbo-2026`
-   - **Data**, **Descrição**
-   - **Capa** (upload)
-   - **Carrossel** se for galeria tipo colagem
-   - **Galeria** (uma foto por “Add foto”)
-   - **Áudio da publicação** (MP3 preparado)
-   - **Texto** (corpo)
-4. **Publish** / salvar.
-
-O Decap cria o `.md` e pode commitár as imagens/áudio no Git. Isso é normal — o próximo passo tira os binários.
-
-### Opção B — Admin local
-
-```sh
-npm run cms   # terminal 1
-npm run dev   # terminal 2
-```
-
-Admin: `http://localhost:4321/frreinert/admin/`  
-Grava no disco; depois você mesmo faz commit + sync (passos 4–5).
-
----
-
-## 4. Subir mídia para o R2 e limpar o Git
-
-**Obrigatório** depois de cada publicação com fotos ou áudio novos.
-
-```sh
-git pull
-npm run sync-media:prune
-```
-
-Isso:
-
-1. Envia `public/images` + `public/audio` → bucket `frreinert-media`
-2. Atualiza `.gitignore` se preciso
-3. Apaga os binários pesados do working tree e do index do Git  
-   (mantém `public/images/payment/*.svg`, `.gitkeep`, `placeholder.svg`)
-
-Conferir sem alterar nada:
-
-```sh
-npm run sync-media -- --prune --dry-run
+npx wrangler login   # conta Cloudflare com o bucket frreinert-media
+cp .env.example .env # PUBLIC_MEDIA_BASE = CDN R2 acima
 ```
 
 ---
 
-## 5. Commit da limpeza e push
+## Comando canônico
 
 ```sh
-git add -A
-git status   # deve mostrar DELETE dos jpg/mp3 + o .md da publicação (se ainda não commitado)
-git commit -m "Add publicação slug-aqui e prune media after R2 sync"
+npm run publish:post -- \
+  --dir ./minhas-fotos \
+  --slug sao-joao-timbo-2026 \
+  --title "São João de Timbó 2026" \
+  --description "Uma festa tradicional..." \
+  --date 2026-06-26 \
+  --audio ./faixa.mp3 \
+  --carousel \
+  --max-edge 2048 \
+  --quality 85
+```
+
+O script:
+
+1. Otimiza imagens (JPEG web, sem marca d’água)
+2. Valida MP3 real (recusa DASH/YouTube disfarçado) e renomeia para ASCII se preciso
+3. Faz upload para o R2 `frreinert-media` (`images/uploads/…`, `audio/…`)
+4. Escreve `src/content/publicacoes/<slug>.md`
+5. Imprime path do `.md` e URLs de smoke-test
+
+**Não** adiciona JPG/MP3 ao Git. Não use `sync-media:prune` neste fluxo.
+
+### Flags
+
+| Flag | Obrigatório | Default | Descrição |
+| --- | --- | --- | --- |
+| `--dir <path>` | sim | — | Pasta com fotos originais |
+| `--slug <slug>` | sim | — | Só `a-z`, `0-9`, hífen; vira `path_slug` e nome do `.md` |
+| `--title <text>` | sim* | — | Título (*omitível com `--update` se o `.md` já existe) |
+| `--description <text>` | sim* | — | Descrição curta |
+| `--date <ISO ou YYYY-MM-DD>` | não | agora (−03:00) | Data da publicação |
+| `--audio <path>` | não | — | MP3 real → `audio/<nome-ascii>.mp3` |
+| `--spotify <url>` | não | — | Preview Spotify (áudio próprio tem prioridade no site) |
+| `--carousel` | não | false | `carousel: true` no frontmatter |
+| `--cover <filename>` | não | 1ª imagem | Nome do arquivo pós-otimização usado como capa |
+| `--body <path>` | não | vazio | Markdown do corpo |
+| `--max-edge <n>` | não | 2048 | Maior lado JPEG |
+| `--quality <n>` | não | 85 | Qualidade JPEG 40–95 |
+| `--out <path>` | não | `.publish-cache/<slug>` | Pasta intermediária de JPEGs |
+| `--dry-run` | não | false | Lista ações sem R2 nem `.md` |
+| `--skip-upload` | não | false | Otimiza + gera `.md` sem R2 (dev) |
+| `--update` | não | false | Atualiza `.md` existente |
+| `--push` | não | false | `git add` + commit + push só do `.md` |
+| `--help` | não | — | Ajuda |
+
+Áudio: preferir nomes ASCII (`vava-ribeiro-calmaria.mp3`). Se o arquivo for suspeito:
+
+```sh
+ffmpeg -i entrada.qualquer -vn -codec:a libmp3lame -qscale:a 2 ./faixa.mp3
+```
+
+### Frontmatter gerado (exemplo)
+
+```yaml
+---
+title: "..."
+path_slug: meu-slug
+date: 2026-06-26T19:00:00.000-03:00
+description: "..."
+cover: /images/uploads/capa.jpg
+carousel: true
+gallery:
+  - /images/uploads/foto-01.jpg
+audio_file: /audio/faixa.mp3
+# spotify_url: ""   # opcional
+---
+
+Corpo em markdown…
+```
+
+---
+
+## Depois do CLI
+
+Sem `--push`:
+
+```sh
+git add src/content/publicacoes/SEU-SLUG.md
+git commit -m "Add publicação SEU-SLUG"
 git push
 ```
 
-O GitHub Actions faz o build/deploy do Pages. Aguarde o workflow em verde.
+Com `--push`, o script faz isso pelo `.md` gerado.
+
+O GitHub Actions faz o build/deploy do Pages (`PUBLIC_MEDIA_BASE` já no workflow).
 
 ---
 
-## 6. Conferir no ar
+## Conferir no ar
 
-1. Página: `https://frreinert.github.io/frreinert/publicacoes/SEU-SLUG/`
-2. Capa e galeria carregam (URLs em `frreinert-media.fabricio-reinert.workers.dev`)
-3. Player **Trilha sonora** aparece no rodapé
-4. Se o browser bloquear autoplay, clique em ▶ — o áudio deve tocar
-5. Hard refresh (`Cmd+Shift+R`) se a página antiga estiver em cache
-
-Teste direto do áudio (deve retornar `200` e `content-length`):
+1. `https://frreinert.github.io/frreinert/publicacoes/<slug>/`
+2. Capa/galeria via `PUBLIC_MEDIA_BASE`
+3. Player de trilha (se `audio_file`)
+4. Hard refresh se cache antigo
 
 ```sh
-curl -sI "https://frreinert-media.fabricio-reinert.workers.dev/audio/seu-arquivo.mp3"
+curl -sI "$PUBLIC_MEDIA_BASE/audio/seu-arquivo.mp3"
+# ou:
+curl -sI "https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev/audio/seu-arquivo.mp3"
 ```
 
 ---
 
-## Checklist (copie por publicação)
+## Checklist (por publicação)
 
-- [ ] Fotos otimizadas (`optimize-images`) e nomes ASCII
-- [ ] Áudio é MP3 real, nome ASCII
-- [ ] Slug sem acentos
-- [ ] Publicado no Decap (capa + galeria + áudio + texto)
-- [ ] `npm run sync-media:prune`
-- [ ] Commit da limpeza + `git push`
+- [ ] Fotos na pasta local; nomes preferencialmente ASCII
+- [ ] Áudio MP3 real (se houver), nome ASCII
+- [ ] `npm run publish:post -- --dir … --slug … --title … --description …` (+ flags)
+- [ ] Revisar o `.md` gerado (corpo, capa, ordem da galeria)
+- [ ] `git add src/content/publicacoes/<slug>.md && git commit && git push` (ou `--push`)
 - [ ] Deploy Pages OK
-- [ ] Página, imagens e trilha conferidas no site
+- [ ] Conferir página, imagens e trilha no ar
 
 ---
 
 ## Problemas comuns
 
-| Sintoma | Causa provável | O que fazer |
+| Sintoma | Causa | Ação |
 | --- | --- | --- |
-| Imagens/áudio 404 no site | Não rodou o sync para o R2 | `npm run sync-media:prune` e push |
-| Áudio não toca | Arquivo DASH/YouTube disfarçado de `.mp3` | Converter com `ffmpeg` e reenviar |
-| Áudio 404 com acento no nome | Unicode NFD/NFC no R2 | Renomear para ASCII, sync de novo |
-| Player some / some no refresh | Build antigo ou cache | Hard refresh; confirme deploy do Pages |
-| Repo GitHub inchando | Binários commitados e nunca pruned | Sempre `sync-media:prune` após publicar |
-| Local sem imagens | Sem `PUBLIC_MEDIA_BASE` | `cp .env.example .env` e `npm run dev` |
+| 404 mídia | Upload não rodou / key errada | Re-rodar `publish:post`; checar key no R2 |
+| Áudio não toca | DASH disfarçado de MP3 | `ffmpeg` → MP3 real e republicar |
+| Local sem imagens | Sem `.env` | `cp .env.example .env` e `npm run dev` |
+| Repo inchando | Binários commitados | Remover do Git; só `.md` versionado |
 
 ---
 
 ## O que **não** fazer
 
-- Não commitar de propósito pastas cheias de JPG/MP3 “para o site funcionar” — em produção a mídia vem do R2.
-- Não pular o `sync-media:prune` depois do Decap.
-- Não usar nomes com acento em arquivos de áudio/imagem.
-- Não confundir com **eventos** (fotos à venda): isso usa `npm run ingest-photos` e o fluxo em [COMMERCE.md](./COMMERCE.md).
+- Não usar CMS web / `/admin/` (removido)
+- Não commitar pastas de JPG/MP3 “para o site funcionar”
+- Não confundir com **eventos** (`publish:evento` / `ingest-photos` + R2 privado) — [COMMERCE.md](./COMMERCE.md)
+- Não apontar `PUBLIC_MEDIA_BASE` para o Worker antigo `*.workers.dev` de mídia
 
 ---
 
@@ -188,8 +177,7 @@ curl -sI "https://frreinert-media.fabricio-reinert.workers.dev/audio/seu-arquivo
 
 | Comando | Uso |
 | --- | --- |
-| `npm run optimize-images -- --dir ./pasta` | Preparar JPEGs para o CMS |
-| `npm run sync-media` | Só upload → R2 |
-| `npm run sync-media:prune` | Upload → R2 **e** limpa Git |
-| `npm run cms` + `npm run dev` | Decap + site local |
-| `cd workers/frreinert-media && npx wrangler deploy` | Redeploy do CDN de mídia |
+| `npm run publish:post -- --dir ./pasta --slug … --title … --description …` | Publicar |
+| `npm run publish:post -- --help` | Flags |
+| `npm run optimize-images -- --dir ./pasta` | Só otimizar JPEGs (utilitário fino) |
+| `npm run publish:evento -- …` | Eventos à venda — [COMMERCE.md](./COMMERCE.md) |

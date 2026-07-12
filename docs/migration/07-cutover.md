@@ -61,11 +61,11 @@ Produção serve mídia sem Worker; CMS morto; comércio OK; branch pronto para 
 - [ ] GitHub OAuth App do Decap revogado/deletado
 - [x] Sem referências a `frreinert-media.fabricio-reinert.workers.dev` no código/docs ativos
 
-### Merge (só com OK humano)
+### Merge (autorizado pelo humano 2026-07-12)
 
-- [ ] PR `feat/jekyl-migration` → `main`
-- [ ] Actions Pages verde
-- [ ] Verificação pós-merge em produção
+- [x] Merge `feat/jekyl-migration` → `main` (`1a0823f`)
+- [x] Actions Pages verde ([run 29178023813](https://github.com/FRReinert/frreinert/actions/runs/29178023813))
+- [x] Verificação pós-merge em produção (CDN; `/admin/` 404) — ver [07-cutover-log.md](./07-cutover-log.md)
 
 ## Restrições
 

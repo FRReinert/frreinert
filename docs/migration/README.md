@@ -64,11 +64,11 @@ CDN atual (dev / Pages): `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev` (
 
 ## Critérios globais de sucesso
 
-- [ ] UX de publicações / eventos / carrinho igual à atual (checklist do 00).
-- [ ] Publicar publicação = **um comando (`publish:post`) + push do markdown** (sem Decap, sem prune manual).
-- [ ] Zero Workers para mídia pública e CMS.
-- [ ] `frreinert-api` e `frreinert-photos` com o mesmo comportamento.
-- [ ] `main` intacto até cutover explícito no 07.
+- [x] UX de publicações / eventos / carrinho igual à atual (checklist do 00) — smoke pós-merge 2026-07-12.
+- [x] Publicar publicação = **um comando (`publish:post`) + push do markdown** (sem Decap, sem prune manual).
+- [ ] Zero Workers para mídia pública e CMS — código removido do repo; **desligar no CF ainda é ação humana** (Workers legado podem estar no ar).
+- [x] `frreinert-api` e `frreinert-photos` com o mesmo comportamento.
+- [x] Cutover 07 concluído: merge em `main` + Pages verde (`1a0823f`).
 
 ## Como acionar um agente
 

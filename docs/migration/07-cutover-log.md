@@ -56,11 +56,17 @@ Checkout/pedido HTML: `…/checkout/` e `…/pedido/` → 200.
 CORS do bucket preservado em [`scripts/r2/frreinert-media-cors.json`](../../scripts/r2/frreinert-media-cors.json).  
 `scripts/lib/r2-put.mjs` agora usa `cwd: root` (não depende mais da pasta do Worker).
 
-### Merge (só com OK humano)
+### Merge (autorizado pelo humano 2026-07-12)
 
-- [ ] PR `feat/jekyl-migration` → `main`
-- [ ] Actions Pages verde pós-merge
-- [ ] Verificação pós-merge em produção (HTML com CDN; `/admin/` 404)
+- [x] Merge `feat/jekyl-migration` → `main` (commit `1a0823f`, push direto; sem `gh` no ambiente)
+- [x] Actions Pages verde pós-merge — [run 29178023813](https://github.com/FRReinert/frreinert/actions/runs/29178023813) `success`
+- [x] Verificação pós-merge em produção:
+  - Home 200 com URLs `pub-08de7bb0…r2.dev` (sem Worker de mídia)
+  - `/publicacoes/sao-joao-timbo-2026/` 200 — carrossel + `<audio>` no CDN
+  - `/admin/` e `/admin/index.html` → **404**
+  - `/carrinho/` 200
+  - CDN imagem 200; áudio Range 206
+  - `frreinert-api` health OK
 
 ---
 

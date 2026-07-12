@@ -59,9 +59,51 @@ Previews públicos podem ir a `public/` / mídia pública; highres fica em `frre
 - **Não** tornar highres público.
 - Não remover Decap ainda se eventos ainda dependem dele na doc — mas o caminho oficial passa a ser CLI.
 
+## Notas (sequência operacional)
+
+### Publicação (blog) vs evento (comércio)
+
+| Fluxo | Comando | Bucket | Resultado |
+| --- | --- | --- | --- |
+| Publicação | `npm run publish:post` | **público** `frreinert-media` (`images/uploads/`, `audio/`) | `.md` em `src/content/publicacoes/` |
+| Evento | `npm run publish:evento` (= `ingest-photos`) | **privado** `frreinert-photos` (highres); previews em `public/images/uploads/eventos/` | `.md` em `src/content/eventos/` + `catalog.json` |
+
+Não misturar buckets. Highres de evento **nunca** vai para `frreinert-media`.
+
+### Sequência pós-ingest (sem alterar o Worker)
+
+```sh
+# 1. Ingest (preview watermark + highres privado + markdown + sync-catalog embutido)
+npm run publish:evento -- --dir ./inbox/meu-evento \
+  --title "Meu Evento" --price 6
+
+# Dry-run (nada gravado):
+npm run publish:evento -- --dir ./inbox/meu-evento --dry-run
+
+# 2. Revisar
+#    - src/content/eventos/<eventId>.md
+#    - public/images/uploads/eventos/<eventId>/*.jpg  (previews)
+#    - workers/frreinert-api/src/catalog.json          (gerado no passo 1)
+
+# 3. Commit/push do site (markdown + previews públicos; sem highres)
+
+# 4. Redeploy do API para o Worker carregar o catálogo novo
+cd workers/frreinert-api && npx wrangler deploy
+```
+
+`sync-catalog` também pode rodar sozinho: `npm run sync-catalog` (útil se o `.md` foi editado à mão).
+
+Contratos HTTP do `frreinert-api` e formato do `catalog.json` permanecem iguais (passo 04 = aliases + docs).
+
+### Smoke (2026-07-11)
+
+- `npm run publish:evento -- --help` OK
+- Dry-run com pasta temporária OK (lista preview + key `eventos/<id>/…` no bucket privado)
+- Nenhum arquivo em `workers/frreinert-api/src/` alterado neste passo (exceto se um ingest real regenerar catalog — evitar commit de lixo de teste)
+
 ## Definition of Done
 
-- [ ] `npm run publish:evento -- --help` (ou ingest) funciona
-- [ ] Fluxo documentado: ingest → sync-catalog → deploy API
-- [ ] Nenhum breaking change em `frreinert-api`
-- [ ] Distinção clara publicação (`publish:post`) vs evento (`publish:evento`)
+- [x] `npm run publish:evento -- --help` (ou ingest) funciona
+- [x] Fluxo documentado: ingest → sync-catalog → deploy API
+- [x] Nenhum breaking change em `frreinert-api`
+- [x] Distinção clara publicação (`publish:post`) vs evento (`publish:evento`)

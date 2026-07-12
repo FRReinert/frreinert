@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 /**
  * Gera workers/frreinert-api/src/catalog.json a partir de src/content/eventos/*.md
- *   node scripts/sync-catalog.mjs
+ *
+ *   npm run sync-catalog
+ *
+ * Usado automaticamente ao final de `npm run publish:evento` / ingest-photos.
+ * Após gerar o catálogo, redeploy do Worker (sem mudar contratos HTTP):
+ *   cd workers/frreinert-api && npx wrangler deploy
+ *
+ * Schema do catalog (não breaking): { events: { [eventId]: { title, photos: { [id]: { title, price, highresKey, preview } } } } }
  */
 import fs from 'node:fs';
 import path from 'node:path';

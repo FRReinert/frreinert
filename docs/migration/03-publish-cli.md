@@ -69,9 +69,15 @@ Script npm canônico = `publish:post` (evita conflito com `npm publish`).
 
 ## Definition of Done
 
-- [ ] `npm run publish:post -- --help` documenta flags
-- [ ] Dry-run lista optimize + keys R2 + path do `.md` sem efeitos
-- [ ] Run real (ou documentado se sem credenciais) gera `.md` válido
-- [ ] Nenhum binário de upload entra no `git status` como tracked
-- [ ] Frontmatter passa no schema (`content.config.ts`)
-- [ ] TARGET-PUBLICACOES.md alinhado ao nome real do script (`publish:post`)
+- [x] `npm run publish:post -- --help` documenta flags
+- [x] Dry-run lista optimize + keys R2 + path do `.md` sem efeitos
+- [x] Run real (ou documentado se sem credenciais) gera `.md` válido
+- [x] Nenhum binário de upload entra no `git status` como tracked
+- [x] Frontmatter passa no schema (`content.config.ts`)
+- [x] TARGET-PUBLICACOES.md alinhado ao nome real do script (`publish:post`)
+
+Implementação (2026-07-11):
+- `scripts/publish-publicacao.mjs` + `scripts/lib/{optimize-images,r2-put,assert-mp3}.mjs`
+- `package.json`: `"publish:post": "node scripts/publish-publicacao.mjs"`
+- Smoke: slug `migration-smoke-test` → `.md` + R2 `images/uploads/capa-teste.jpg`, `galeria-um.jpg`, `audio/trilha-smoke.mp3` (CDN 200)
+- `.publish-cache/` no `.gitignore`; `sync-media` marcado deprecated

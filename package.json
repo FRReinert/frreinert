@@ -13,10 +13,11 @@
     "astro": "astro",
     "sync-catalog": "node scripts/sync-catalog.mjs",
     "ingest-photos": "node scripts/ingest-event-photos.mjs",
+    "publish:evento": "node scripts/ingest-event-photos.mjs",
     "optimize-images": "node scripts/optimize-blog-images.mjs",
+    "publish:post": "node scripts/publish-publicacao.mjs",
     "sync-media": "node scripts/sync-media.mjs",
-    "sync-media:prune": "node scripts/sync-media.mjs --prune",
-    "cms": "npx --yes decap-server"
+    "sync-media:prune": "node scripts/sync-media.mjs --prune"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",

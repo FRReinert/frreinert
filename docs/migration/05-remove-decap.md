@@ -54,9 +54,9 @@ Publicação e eventos passam a ser só CLI (passos 03–04).
 
 ## Definition of Done
 
-- [ ] `/admin/` não existe no build (`dist` sem admin)
-- [ ] Sem script `cms`
-- [ ] Sem pasta `workers/frreinert-decap-oauth`
-- [ ] COMMERCE/README sem fluxo OAuth de CMS
-- [ ] `npm run build` OK
-- [ ] `frreinert-api` intocado
+- [x] `/admin/` não existe no build (`dist` sem admin)
+- [x] Sem script `cms`
+- [x] Sem pasta `workers/frreinert-decap-oauth`
+- [x] COMMERCE/README sem fluxo OAuth de CMS
+- [x] `npm run build` OK
+- [x] `frreinert-api` intocado

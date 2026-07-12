@@ -66,8 +66,11 @@ Alvo: mesmo bucket, host sem Worker (ex. `media.frreinert...` via R2 custom doma
 
 ## Definition of Done
 
-- [ ] Host CDN documentado em `01-cdn-notes.md`
-- [ ] Objeto de teste (imagem + áudio existentes) acessível no host novo
-- [ ] `.env.example` atualizado **ou** TODO explícito se DNS pendente
-- [ ] Worker de mídia ainda no repo (remoção só no 07)
-- [ ] `frreinert-api` intocado
+- [x] Host CDN documentado em `01-cdn-notes.md`
+- [x] Objeto de teste (imagem + áudio existentes) acessível no host novo
+- [x] `.env.example` atualizado **ou** TODO explícito se DNS pendente
+- [x] Worker de mídia ainda no repo (remoção só no 07)
+- [x] `frreinert-api` intocado
+
+Notas: host `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev` (r2.dev; custom domain pendente).  
+`deploy.yml` de produção **não** alterado — TODO em `01-cdn-notes.md`.

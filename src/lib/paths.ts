@@ -7,16 +7,19 @@ export function withBase(path = '') {
 }
 
 const MEDIA_PREFIXES = ['images/', 'audio/'];
+/** Ícones de pagamento versionados em Pages (`public/images/payment/`), não no R2. */
+const LOCAL_MEDIA_PREFIXES = ['images/payment/'];
 
 function isRemoteMediaPath(path: string): boolean {
   const p = path.replace(/^\/+/, '');
+  if (LOCAL_MEDIA_PREFIXES.some((prefix) => p.startsWith(prefix))) return false;
   return MEDIA_PREFIXES.some((prefix) => p.startsWith(prefix));
 }
 
 /**
- * Resolve media paths from Decap (`/images/...`, `/audio/...`).
- * When PUBLIC_MEDIA_BASE is set (R2 CDN Worker), heavy assets go there;
- * otherwise fall back to the site base (local/public).
+ * Resolve media paths from content (`/images/...`, `/audio/...`).
+ * When PUBLIC_MEDIA_BASE is set (R2 CDN público), uploads/áudio vão para o CDN;
+ * `images/payment/` e demais paths ficam no site base (GitHub Pages / public).
  */
 export function assetUrl(path: string) {
   if (path.startsWith('http://') || path.startsWith('https://')) return path;

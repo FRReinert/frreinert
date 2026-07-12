@@ -36,30 +36,30 @@ Produção serve mídia sem Worker; CMS morto; comércio OK; branch pronto para 
 ### Infra
 
 - [ ] DNS / custom domain R2 ativo e estável
-- [ ] `deploy.yml` em `feat/jekyl-migration` com `PUBLIC_MEDIA_BASE` correto
-- [ ] Objetos antigos (`images/uploads/...`, `audio/...`) OK no CDN novo
+- [x] `deploy.yml` em `feat/jekyl-migration` com `PUBLIC_MEDIA_BASE` correto
+- [x] Objetos antigos (`images/uploads/...`, `audio/...`) OK no CDN novo
 
 ### Smoke estático
 
-- [ ] Home e listagem publicações
-- [ ] Detalhe com carrossel/galeria
-- [ ] Áudio toca (player + `curl -sI` no MP3)
-- [ ] Eventos listagem/detalhe (previews)
-- [ ] Carrinho UI (localStorage) sem erro de console crítico
+- [x] Home e listagem publicações
+- [x] Detalhe com carrossel/galeria
+- [x] Áudio toca (player + `curl -sI` no MP3)
+- [x] Eventos listagem/detalhe (previews)
+- [x] Carrinho UI (localStorage) sem erro de console crítico
 
 ### Smoke dinâmico (API intacta)
 
-- [ ] Worker `frreinert-api` responde
-- [ ] Fluxo OTP ou magic link não regrediu (teste controlado)
-- [ ] Download ainda exige sessão/token (não aberto)
+- [x] Worker `frreinert-api` responde
+- [x] Fluxo OTP ou magic link não regrediu (teste controlado)
+- [x] Download ainda exige sessão/token (não aberto)
 
 ### Decommission
 
-- [ ] Código `workers/frreinert-media` removido do branch
+- [x] Código `workers/frreinert-media` removido do branch
 - [ ] Worker `frreinert-media` desligado/deletado no dashboard CF (humano ou wrangler)
 - [ ] Worker `frreinert-decap-oauth` desligado/deletado
 - [ ] GitHub OAuth App do Decap revogado/deletado
-- [ ] Sem referências a `frreinert-media.fabricio-reinert.workers.dev` no código/docs ativos
+- [x] Sem referências a `frreinert-media.fabricio-reinert.workers.dev` no código/docs ativos
 
 ### Merge (só com OK humano)
 
@@ -75,8 +75,10 @@ Produção serve mídia sem Worker; CMS morto; comércio OK; branch pronto para 
 
 ## Definition of Done
 
-- [ ] `07-cutover-log.md` preenchido
-- [ ] Produção (ou preview do branch) sem Worker de mídia
-- [ ] Admin Decap inacessível
-- [ ] Comércio validado no nível acordado no checklist
-- [ ] Branch mergeável; merge só após confirmação do usuário
+- [x] `07-cutover-log.md` preenchido
+- [x] Produção (ou preview do branch) sem Worker de mídia
+- [x] Admin Decap inacessível
+- [x] Comércio validado no nível acordado no checklist
+- [x] Branch mergeável; merge só após confirmação do usuário
+
+Log detalhado: [07-cutover-log.md](./07-cutover-log.md).

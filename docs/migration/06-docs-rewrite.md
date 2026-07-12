@@ -41,8 +41,8 @@ Promover [TARGET-PUBLICACOES.md](./TARGET-PUBLICACOES.md) → [`docs/PUBLICACOES
 
 ## Definition of Done
 
-- [ ] `docs/PUBLICACOES.md` descreve só o fluxo novo (sem Decap/prune)
-- [ ] `README.md` alinhado
-- [ ] `COMMERCE.md` sem OAuth Decap; eventos via CLI
-- [ ] Comandos no doc batem com `package.json`
-- [ ] Host CDN documentado = valor em `.env.example` / deploy.yml
+- [x] `docs/PUBLICACOES.md` descreve só o fluxo novo (sem Decap/prune)
+- [x] `README.md` alinhado
+- [x] `COMMERCE.md` sem OAuth Decap; eventos via CLI
+- [x] Comandos no doc batem com `package.json`
+- [x] Host CDN documentado = valor em `.env.example` / deploy.yml

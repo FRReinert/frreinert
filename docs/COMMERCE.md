@@ -1,36 +1,44 @@
 # Comércio de fotos + Mercado Pago + Cloudflare
 
-## Decap CMS (admin)
+CMS web removido. Eventos (fotos à venda) e o catálogo da API usam só CLI. O Worker **`frreinert-api`** permanece o backend de checkout, OTP, webhook e download — sem mudança de contrato neste playbook.
 
-O login **não** usa Netlify. Há um Worker OAuth em `workers/frreinert-decap-oauth`.
+## Eventos (fotos à venda)
 
-1. Crie um [GitHub OAuth App](https://github.com/settings/applications/new):
-   - Homepage: `https://frreinert.github.io/frreinert/`
-   - Callback: `https://frreinert-decap-oauth.fabricio-reinert.workers.dev/callback`
-2. Deploy + secrets:
+Caminho oficial: `npm run publish:evento` (alias de `ingest-photos`).
 
 ```bash
-cd workers/frreinert-decap-oauth
-npm install
-npx wrangler deploy
-npx wrangler secret put GITHUB_CLIENT_ID
-npx wrangler secret put GITHUB_CLIENT_SECRET
+npm run publish:evento -- --dir ./inbox/casamento-ana-pedro \
+  --title "Casamento Ana & Pedro" \
+  --price 6 \
+  --location "Porto Alegre, RS"
+
+# equivalente:
+# npm run ingest-photos -- --dir ./inbox/casamento-ana-pedro ...
 ```
 
-3. Publique o site (para o `config.yml` com `base_url` ir ao ar).
-4. Abra `/admin/` e faça login com GitHub.
+Uma pasta local = um evento (o nome da pasta vira o `eventId`).
 
+O script:
+
+1. Gera preview 800px com marca d'água em `public/images/uploads/eventos/{eventId}/`
+2. Atualiza `src/content/eventos/{eventId}.md`
+3. Sobe a alta no R2 **privado** `frreinert-photos` (`eventos/{eventId}/{codigo}.jpg`) — requer `wrangler` logado
+4. Roda `sync-catalog` → `workers/frreinert-api/src/catalog.json`
+
+Flags úteis: `--dry-run`, `--skip-r2`, `--max-edge 800`.
+
+**Não** confundir com publicações do blog (`npm run publish:post` → bucket público `frreinert-media`). Ver [PUBLICACOES.md](./PUBLICACOES.md).
+
+Depois do ingest:
+
+```bash
+# sync-catalog já roda no ingest (exceto --dry-run); redeploy carrega o catálogo no Worker:
+cd workers/frreinert-api && npx wrangler deploy
+```
+
+Se editar o `.md` do evento à mão: `npm run sync-catalog` e redeploy.
 
 - Preço e `highresKey` são resolvidos no **Worker** via `catalog.json` (não confiar no browser)
-- Após editar eventos no CMS: `node scripts/sync-catalog.mjs` e `npx wrangler deploy`
-- Configure a assinatura do webhook:
-
-```bash
-npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
-```
-
-(cole a “Assinatura secreta” do painel de Webhooks do MP)
-
 - Preview público deve ser arquivo **já com marca d'água** (CSS não protege)
 - Em repo público, `highresKey` no markdown/catalog é visível — a proteção real é o arquivo privado no R2
 
@@ -69,6 +77,14 @@ No `wrangler.toml`:
 
 - `SITE_URL` — URL pública do site
 - `FROM_EMAIL` — `pedidos@vanguardab2b.com.br` (domínio verificado no Resend)
+
+Webhook Mercado Pago — configure a assinatura secreta:
+
+```bash
+npx wrangler secret put MERCADOPAGO_WEBHOOK_SECRET
+```
+
+(cole a “Assinatura secreta” do painel de Webhooks do MP)
 
 ## Mercado Pago — webhook
 
@@ -113,27 +129,6 @@ npx wrangler r2 object put frreinert-photos/eventos/casamento-ana-pedro/ana-pedr
 ```
 
 Sem `--remote` o Wrangler grava só no R2 local.
-
-## Ingestão em lote (preview + CMS + R2)
-
-Uma pasta local = um evento (o nome da pasta vira o `eventId`).
-
-```bash
-npm run ingest-photos -- --dir ./inbox/casamento-ana-pedro \
-  --title "Casamento Ana & Pedro" \
-  --price 6 \
-  --location "Porto Alegre, RS"
-```
-
-O script:
-1. Gera preview 800px com marca d'água em `public/images/uploads/eventos/{eventId}/`
-2. Atualiza `src/content/eventos/{eventId}.md`
-3. Sobe a alta no R2 (`eventos/{eventId}/{codigo}.jpg`) — requer `wrangler` logado
-4. Roda `sync-catalog`
-
-Flags: `--dry-run`, `--skip-r2`, `--max-edge 800`.
-
-Depois: commit/push do site e `cd workers/frreinert-api && npx wrangler deploy` (catálogo).
 
 ## Teste rápido
 

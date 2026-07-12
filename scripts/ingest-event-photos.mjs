@@ -1,13 +1,20 @@
 #!/usr/bin/env node
 /**
- * Ingere fotos de um evento a partir de uma pasta local:
- *  - gera preview com marca d'água em public/
+ * Ingere fotos de um **evento** (comércio) a partir de uma pasta local:
+ *  - gera preview com marca d'água em public/images/uploads/eventos/{eventId}/
  *  - atualiza src/content/eventos/{eventId}.md
- *  - sobe alta resolução no R2 (wrangler --remote)
- *  - sincroniza catalog.json
+ *  - sobe alta resolução no R2 **privado** `frreinert-photos` (não misturar com frreinert-media)
+ *  - sincroniza workers/frreinert-api/src/catalog.json
+ *
+ * Aliases npm (mesmo script):
+ *   npm run publish:evento -- …
+ *   npm run ingest-photos -- …
+ *
+ * NÃO é o fluxo de publicações do blog — esse é:
+ *   npm run publish:post -- …
  *
  * Uso:
- *   npm run ingest-photos -- --dir ./inbox/casamento-ana-pedro \
+ *   npm run publish:evento -- --dir ./inbox/casamento-ana-pedro \
  *     --title "Casamento Ana & Pedro" --price 6
  */
 
@@ -35,6 +42,7 @@ function parseArgs(argv) {
     maxEdge: 800,
     dryRun: false,
     skipR2: false,
+    help: false,
   };
 
   const takeValue = (i) => {
@@ -81,18 +89,31 @@ function parseArgs(argv) {
 }
 
 function usage() {
-  console.log(`Uso:
+  console.log(`Ingere fotos de evento (comércio) — NÃO use para publicações do blog.
+
+  npm run publish:evento -- --dir ./inbox/casamento-ana-pedro [opções]
   npm run ingest-photos -- --dir ./inbox/casamento-ana-pedro [opções]
 
+  (Publicações / blog: npm run publish:post)
+
 Opções:
-  --dir <pasta>         Pasta com as fotos (obrigatório; nome = eventId)
+  --dir <pasta>         Pasta com as fotos (obrigatório; nome da pasta = eventId)
   --title <texto>       Título do evento (cria/atualiza markdown)
   --price <número>      Preço padrão por foto (default: 6)
   --location <texto>    Local do evento
   --description <texto> Descrição do evento
-  --max-edge <px>       Lado maior do preview (default: 800)
+  --max-edge <px>       Lado maior do preview com watermark (default: 800)
   --dry-run             Só lista o que seria feito
-  --skip-r2             Não sobe altas no R2
+  --skip-r2             Não sobe altas no R2 privado frreinert-photos
+  --help                Esta ajuda
+
+Buckets:
+  previews  → public/… (Pages) / CDN público se synced
+  highres   → R2 privado frreinert-photos (só download via frreinert-api)
+
+Pós-ingest (se o catálogo mudou):
+  npm run sync-catalog   # já roda ao final do ingest (exceto dry-run)
+  cd workers/frreinert-api && npx wrangler deploy
 `);
 }
 
@@ -460,8 +481,12 @@ async function main() {
     console.log('Dica: arquivos "* copy.jpg" do Finder às vezes vêm truncados — use o original.');
   }
 
-  console.log('\nPronto. Faça commit/push do site e, se o catálogo mudou, redeploy do Worker:');
-  console.log('  cd workers/frreinert-api && npx wrangler deploy');
+  console.log('\nPronto. Próximos passos:');
+  console.log('  1. Revisar src/content/eventos/<eventId>.md e previews em public/');
+  console.log('  2. git add/commit/push do site (markdown + previews; NÃO highres)');
+  console.log('  3. Catálogo já sincronizado neste script; redeploy do Worker API:');
+  console.log('       cd workers/frreinert-api && npx wrangler deploy');
+  console.log('  (Publicações do blog usam npm run publish:post — bucket frreinert-media.)');
 }
 
 main().catch((err) => {

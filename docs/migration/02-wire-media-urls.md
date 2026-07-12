@@ -64,8 +64,12 @@ Preferência: **excluir `images/payment/` do rewrite** para CDN, mantendo ícone
 
 ## Definition of Done
 
-- [ ] `.env.example` e `deploy.yml` com host CDN novo
-- [ ] `assetUrl` não quebra ícones de pagamento
-- [ ] `npm run build` OK; dist sem URL do Worker de mídia
-- [ ] Publicação existente resolve mídia no CDN novo em preview local
-- [ ] `frreinert-api` intocado
+- [x] `.env.example` e `deploy.yml` com host CDN novo
+- [x] `assetUrl` não quebra ícones de pagamento
+- [x] `npm run build` OK; dist sem URL do Worker de mídia
+- [x] Publicação existente resolve mídia no CDN novo em preview local
+- [x] `frreinert-api` intocado
+
+Verificação 2026-07-11: build com `PUBLIC_MEDIA_BASE=https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev`;
+dist sem `frreinert-media*.workers.dev`; publicação usa host `r2.dev`; payment via `/frreinert/images/payment/`.
+`images/payment/` excluído do rewrite em `src/lib/paths.ts`. Carrinho passou a importar o mesmo `assetUrl`.

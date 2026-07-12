@@ -9,11 +9,11 @@ Simplificar publicação e reduzir superfície de Workers **sem** mudar a experi
 | Camada | Hoje | Alvo |
 | --- | --- | --- |
 | SSG / UX | Astro 7 estático | Astro 7 (mesma UX) |
-| CMS | Decap + Worker OAuth | Removido |
-| Publicação | Decap → sync-media:prune → commit | Um CLI `publish:post` + push do `.md` |
-| Mídia pública | R2 + Worker `frreinert-media` | R2 com domínio público (sem Worker) |
+| CMS | Removido (passo 05) | — |
+| Publicação | CLI `publish:post` + push do `.md` | Igual (docs em [`docs/PUBLICACOES.md`](../PUBLICACOES.md)) |
+| Mídia pública | R2 + CDN `PUBLIC_MEDIA_BASE` (código Worker removido no 07) | Desligar Worker legado no CF + merge |
 | Comércio | Worker `frreinert-api` | **Intacto** |
-| Eventos | `ingest-photos` + `sync-catalog` | Mantido; opcional alias CLI |
+| Eventos | `publish:evento` (= `ingest-photos`) + `sync-catalog` | Mantido |
 
 **Não migrar para Jekyll.** O site já é estático; o custo de reescrever carrossel, áudio, carrinho e checkout em Liquid não reduz a necessidade do Worker de comércio.
 
@@ -58,7 +58,9 @@ Browser
 | 07 | [07-cutover.md](./07-cutover.md) | Cutover produção + decommission |
 | 08 | [08-api-hardening.md](./08-api-hardening.md) | Opcional: rate limit / Turnstile na API |
 
-Contrato do CLI (`publish:post`) e rascunho do guia operacional: [TARGET-PUBLICACOES.md](./TARGET-PUBLICACOES.md).
+Contrato do CLI (`publish:post`): [TARGET-PUBLICACOES.md](./TARGET-PUBLICACOES.md). Guia operacional promovido: [`docs/PUBLICACOES.md`](../PUBLICACOES.md) (passo 06).
+
+CDN atual (dev / Pages): `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev` (`.env.example`, `deploy.yml`).
 
 ## Critérios globais de sucesso
 

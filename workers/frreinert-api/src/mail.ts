@@ -45,7 +45,7 @@ export async function sendMail(env: MailEnv, message: MailMessage): Promise<bool
 }
 
 export function siteBase(env: MailEnv) {
-  return (env.SITE_URL || 'https://frreinert.github.io/frreinert').replace(/\/$/, '');
+  return (env.SITE_URL || 'https://frreinert.com.br').replace(/\/$/, '');
 }
 
 export function orderApprovedEmail(env: MailEnv, email: string, ref: string) {

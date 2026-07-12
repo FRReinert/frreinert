@@ -128,7 +128,7 @@ O GitHub Actions faz o build/deploy do Pages (`PUBLIC_MEDIA_BASE` já no workflo
 
 ## Conferir no ar
 
-1. `https://frreinert.github.io/frreinert/publicacoes/<slug>/`
+1. `https://frreinert.com.br/publicacoes/<slug>/`
 2. Capa/galeria via `PUBLIC_MEDIA_BASE`
 3. Player de trilha (se `audio_file`)
 4. Hard refresh se cache antigo

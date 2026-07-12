@@ -69,6 +69,8 @@ type DownloadGrant = {
 };
 
 const ALLOWED_ORIGINS = [
+  'https://frreinert.com.br',
+  'https://www.frreinert.com.br',
   'https://frreinert.github.io',
   'http://localhost:4321',
   'http://127.0.0.1:4321',
@@ -339,7 +341,7 @@ async function handleCheckout(request: Request, env: Env, origin: string | null)
   }
 
   const total = resolved.reduce((sum, item) => sum + item.unitPrice, 0);
-  const site = (env.SITE_URL || 'https://frreinert.github.io/frreinert').replace(/\/$/, '');
+  const site = (env.SITE_URL || 'https://frreinert.com.br').replace(/\/$/, '');
   const workerOrigin = new URL(request.url).origin;
   const externalReference = `order_${crypto.randomUUID()}`;
 

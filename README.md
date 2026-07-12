@@ -1,13 +1,13 @@
 # Fabricio Reinert — fotolog (Astro + GitHub Pages + Cloudflare)
 
-Site estático em Astro (`base: /frreinert`). Conteúdo via CLI; comércio via Worker `frreinert-api` + Mercado Pago.
+Site estático em Astro (`https://frreinert.com.br`). Conteúdo via CLI; comércio via Worker `frreinert-api` + Mercado Pago.
 
 ## Desenvolvimento
 
 ```sh
 npm install
 cp .env.example .env   # PUBLIC_MEDIA_BASE = CDN R2
-npm run dev            # http://localhost:4321/frreinert/
+npm run dev            # http://localhost:4321/
 ```
 
 Se o content layer ficar desatualizado: `npm run dev:fresh`.

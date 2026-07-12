@@ -10,7 +10,7 @@ compatibility_date = "2025-07-01"
 #   npx wrangler secret put RESEND_API_KEY
 
 [vars]
-SITE_URL = "https://frreinert.github.io/frreinert"
+SITE_URL = "https://frreinert.com.br"
 FROM_EMAIL = "pedidos@vanguardab2b.com.br"
 
 [[r2_buckets]]

@@ -3,6 +3,8 @@
     {
       "allowed": {
         "origins": [
+          "https://frreinert.com.br",
+          "https://www.frreinert.com.br",
           "https://frreinert.github.io",
           "http://localhost:4321",
           "http://127.0.0.1:4321"

@@ -90,7 +90,7 @@ const embeds = videos.map(parseVideo);
                 {gallery.map((_, i) => (
                   <button
                     type="button"
-                    class="h-2 w-2 rounded-full bg-muted transition data-[active]:bg-paper"
+                    class="h-2 w-2 rounded-full bg-muted transition data-[active]:bg-ink"
                     data-carousel-dot
                     data-index={i}
                     aria-label={`Ir para foto ${i + 1}`}
@@ -110,7 +110,7 @@ const embeds = videos.map(parseVideo);
   embeds.length > 0 && (
     <section class="mt-14 space-y-8" aria-label="Vídeos">
       {embeds.map((video) => (
-        <div class="aspect-video w-full overflow-hidden bg-ink-soft">
+        <div class="aspect-video w-full overflow-hidden bg-paper-tint">
           {video.kind === 'youtube' && (
             <iframe
               class="h-full w-full"

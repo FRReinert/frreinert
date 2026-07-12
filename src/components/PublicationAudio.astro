@@ -20,10 +20,10 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
       data-pub-audio
       data-pub-audio-local
     >
-      <div class="pointer-events-auto mx-auto flex max-w-xl items-center gap-4 rounded-xl border border-line/80 bg-ink px-4 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.45)]">
+      <div class="pointer-events-auto mx-auto flex max-w-xl items-center gap-4 rounded-xl border border-line bg-paper px-4 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.08)]">
         <button
           type="button"
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line/80 text-paper transition hover:border-paper/50"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line text-ink transition hover:border-ink/40 hover:bg-paper-tint"
           data-audio-toggle
           aria-label="Tocar trilha"
           aria-pressed="false"
@@ -32,8 +32,8 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
           <span data-audio-icon-play aria-hidden="true">▶</span>
         </button>
         <div class="min-w-0 flex-1">
-          <p class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Trilha sonora</p>
-          <p class="truncate text-sm text-paper/90">Em loop</p>
+          <p class="text-[0.65rem] uppercase tracking-[0.12em] text-muted">Trilha sonora</p>
+          <p class="truncate text-sm text-ink-soft">Em loop</p>
         </div>
         <audio
           data-pub-audio-el
@@ -183,7 +183,7 @@ const embed = !localSrc ? parseSpotifyUrl(spotifyUrl) : null;
       data-pub-audio
       data-spotify-uri={embed.uri}
     >
-      <div class="pointer-events-auto mx-auto max-w-xl overflow-hidden rounded-xl border border-line/80 bg-ink shadow-[0_-8px_32px_rgba(0,0,0,0.45)]">
+      <div class="pointer-events-auto mx-auto max-w-xl overflow-hidden rounded-xl border border-line bg-paper shadow-[0_-8px_32px_rgba(0,0,0,0.08)]">
         <div data-spotify-embed class="h-20 w-full" />
       </div>
     </div>

@@ -8,25 +8,25 @@ import { withBase } from '../../lib/paths';
   description="Suas fotos compradas"
 >
   <header class="mb-10 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Biblioteca</h1>
+    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Biblioteca</h1>
     <p class="mt-4 text-muted" data-bib-lead>Carregando suas compras…</p>
   </header>
 
   <div data-bib-body class="max-w-2xl space-y-10">
-    <p data-bib-error class="hidden text-sm text-red-300" role="alert"></p>
+    <p data-bib-error class="hidden text-sm text-accent" role="alert"></p>
     <div data-bib-orders class="space-y-10"></div>
 
     <div class="flex flex-wrap gap-4">
       <button
         type="button"
         data-bib-logout
-        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+        class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
       >
         Sair
       </button>
       <a
         href={withBase('eventos/')}
-        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+        class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
       >
         Ver eventos
       </a>
@@ -109,16 +109,16 @@ import { withBase } from '../../lib/paths';
               const previewSrc = item.preview ? escapeHtml(assetUrl(item.preview)) : '';
               const preview = previewSrc
                 ? `<img src="${previewSrc}" alt="${code}" class="aspect-[3/4] w-20 shrink-0 object-cover" loading="lazy" />`
-                : `<div class="aspect-[3/4] w-20 shrink-0 bg-ink-soft"></div>`;
+                : `<div class="aspect-[3/4] w-20 shrink-0 bg-paper-tint"></div>`;
               const href = item.downloadUrl ? escapeHtml(item.downloadUrl) : '';
               const action = href
-                ? `<a href="${href}" class="border border-paper/40 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-paper transition hover:border-paper hover:bg-paper/5">Baixar</a>`
+                ? `<a href="${href}" class="border border-ink/25 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-ink transition hover:border-ink hover:bg-paper-tint">Baixar</a>`
                 : `<span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Preparando…</span>`;
               return `
                 <li class="flex items-center gap-4 py-4">
                   ${preview}
                   <div class="min-w-0 flex-1">
-                    <p class="font-mono text-sm tracking-wide text-paper">${code}</p>
+                    <p class="font-mono text-sm tracking-tight text-ink">${code}</p>
                     <p class="mt-1 text-sm text-muted">${escapeHtml(formatBRL(item.unitPrice))}</p>
                   </div>
                   ${action}
@@ -128,8 +128,8 @@ import { withBase } from '../../lib/paths';
 
           return `
             <section>
-              <p class="text-xs uppercase tracking-[0.2em] text-muted">${escapeHtml(date)} · ${escapeHtml(formatBRL(order.total))}</p>
-              <ul class="mt-3 divide-y divide-line/80 border-y border-line/80">${items}</ul>
+              <p class="text-xs uppercase tracking-[0.12em] text-muted">${escapeHtml(date)} · ${escapeHtml(formatBRL(order.total))}</p>
+              <ul class="mt-3 divide-y divide-line border-y border-line">${items}</ul>
             </section>`;
         })
         .join('');

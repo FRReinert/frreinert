@@ -8,15 +8,15 @@ import { withBase } from '../../lib/paths';
   description="Confirmando acesso às suas fotos"
 >
   <header class="mb-10 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Acesso</h1>
+    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Acesso</h1>
     <p class="mt-4 text-muted" data-acesso-status>Validando seu link…</p>
   </header>
 
-  <p data-acesso-error class="hidden max-w-md text-sm text-red-300" role="alert"></p>
+  <p data-acesso-error class="hidden max-w-md text-sm text-accent" role="alert"></p>
   <a
     href={withBase('minhas-fotos/')}
     data-acesso-retry
-    class="mt-6 hidden text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+    class="mt-6 hidden text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
   >
     Pedir novo link
   </a>

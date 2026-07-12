@@ -8,7 +8,7 @@ import { withBase } from '../../lib/paths';
   description="Acesse as fotos que você comprou"
 >
   <header class="mb-10 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Minhas fotos</h1>
+    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Minhas fotos</h1>
     <p class="mt-4 text-muted">
       Informe o e-mail usado na compra. Enviamos um link de acesso — sem senha.
     </p>
@@ -16,7 +16,7 @@ import { withBase } from '../../lib/paths';
 
   <form data-magic-form class="max-w-md space-y-6">
     <label class="block space-y-2">
-      <span class="text-xs uppercase tracking-[0.2em] text-muted">E-mail da compra</span>
+      <span class="text-xs uppercase tracking-[0.12em] text-muted">E-mail da compra</span>
       <input
         type="email"
         name="email"
@@ -24,17 +24,17 @@ import { withBase } from '../../lib/paths';
         autocomplete="email"
         placeholder="seu@email.com"
         data-magic-email
-        class="w-full border border-line/80 bg-transparent px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/60 focus:border-paper/50"
+        class="w-full border border-line bg-transparent px-4 py-3 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-ink/40"
       />
     </label>
 
     <p data-magic-message class="hidden text-sm text-muted" role="status"></p>
-    <p data-magic-error class="hidden text-sm text-red-300" role="alert"></p>
+    <p data-magic-error class="hidden text-sm text-accent" role="alert"></p>
 
     <button
       type="submit"
       data-magic-submit
-      class="border border-paper/40 px-6 py-3 text-xs uppercase tracking-[0.28em] text-paper transition hover:border-paper hover:bg-paper/5 disabled:opacity-50"
+      class="border border-ink/25 px-6 py-3 text-xs uppercase tracking-[0.14em] text-ink transition hover:border-ink hover:bg-paper-tint disabled:opacity-50"
     >
       Enviar link de acesso
     </button>
@@ -42,7 +42,7 @@ import { withBase } from '../../lib/paths';
 
   <p class="mt-10 max-w-md text-sm text-muted">
     Já tem uma sessão aberta?
-    <a href={withBase('minhas-fotos/biblioteca/')} class="text-paper underline-offset-4 hover:underline">
+    <a href={withBase('minhas-fotos/biblioteca/')} class="text-link underline-offset-4 hover:underline">
       Ir para a biblioteca
     </a>
   </p>

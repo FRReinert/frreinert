@@ -5,7 +5,7 @@ import { withBase } from '../lib/paths';
 
 <Layout title="Carrinho | Fabricio Roberto Reinert" description="Seu carrinho de fotos">
   <header class="mb-10 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Carrinho</h1>
+    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Carrinho</h1>
     <p class="mt-4 text-muted">Revise as fotos e siga para o checkout.</p>
   </header>
 
@@ -13,29 +13,29 @@ import { withBase } from '../lib/paths';
     <p>Seu carrinho está vazio.</p>
     <a
       href={withBase('eventos/')}
-      class="mt-6 inline-block text-xs uppercase tracking-[0.22em] text-paper underline-offset-4 hover:underline"
+      class="mt-6 inline-block text-xs uppercase tracking-[0.12em] text-link underline-offset-4 hover:underline"
     >
       Ver eventos
     </a>
   </div>
 
   <div data-cart-filled class="hidden">
-    <ul data-cart-list class="divide-y divide-line/80 border-y border-line/80"></ul>
+    <ul data-cart-list class="divide-y divide-line border-y border-line"></ul>
     <div class="mt-8 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
       <p class="text-lg">
-        Total: <span data-cart-total class="font-display text-2xl tracking-wide">R$&nbsp;0,00</span>
+        Total: <span data-cart-total class="font-display text-2xl tracking-tight">R$&nbsp;0,00</span>
       </p>
       <div class="flex flex-wrap gap-4">
         <button
           type="button"
           data-cart-clear
-          class="border border-line/80 px-5 py-3 text-xs uppercase tracking-[0.22em] text-muted transition hover:border-paper/40 hover:text-paper"
+          class="border border-line px-5 py-3 text-xs uppercase tracking-[0.12em] text-muted transition hover:border-ink/40 hover:text-ink"
         >
           Limpar carrinho
         </button>
         <a
           href={withBase('checkout/')}
-          class="border border-paper/40 px-6 py-3 text-xs uppercase tracking-[0.28em] text-paper transition hover:border-paper hover:bg-paper/5"
+          class="border border-ink/25 px-6 py-3 text-xs uppercase tracking-[0.14em] text-ink transition hover:border-ink hover:bg-paper-tint"
         >
           Ir para checkout
         </a>
@@ -79,13 +79,13 @@ import { withBase } from '../lib/paths';
       <li class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center">
         <img src="${assetUrl(item.preview)}" alt="" class="aspect-[3/4] w-full max-w-[7rem] object-cover" />
         <div class="flex-1">
-          <p class="text-xs uppercase tracking-[0.18em] text-muted">${item.eventTitle}</p>
-          <h2 class="mt-1 font-mono text-sm tracking-wide text-paper">${item.photoId}</h2>
+          <p class="text-xs uppercase tracking-[0.12em] text-muted">${item.eventTitle}</p>
+          <h2 class="mt-1 font-mono text-sm tracking-wide text-ink">${item.photoId}</h2>
           <p class="mt-1 text-sm text-muted">${formatBRL(item.price)}</p>
         </div>
         <button
           type="button"
-          class="text-xs uppercase tracking-[0.2em] text-muted hover:text-paper"
+          class="text-xs uppercase tracking-[0.12em] text-muted hover:text-ink"
           data-remove="${item.eventId}::${item.photoId}"
         >
           Remover

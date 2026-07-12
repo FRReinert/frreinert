@@ -5,40 +5,40 @@ import { withBase } from '../lib/paths';
 
 <Layout title="Seu pedido | Fabricio Roberto Reinert" description="Status do pedido">
   <header class="mb-10 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Seu pedido</h1>
+    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Seu pedido</h1>
     <p class="mt-4 text-muted" data-pedido-lead>
       Estamos confirmando seu pagamento.
     </p>
   </header>
 
   <div data-pedido-body class="max-w-xl space-y-8">
-    <div class="border border-line/80 px-5 py-4">
-      <p class="text-xs uppercase tracking-[0.2em] text-muted">Status</p>
-      <p data-pedido-status class="mt-2 font-display text-2xl tracking-wide">Carregando…</p>
+    <div class="border border-line px-5 py-4">
+      <p class="text-xs uppercase tracking-[0.12em] text-muted">Status</p>
+      <p data-pedido-status class="mt-2 font-display text-2xl tracking-tight">Carregando…</p>
       <p data-pedido-message class="mt-3 text-sm leading-relaxed text-muted"></p>
     </div>
 
     <div>
       <p class="mb-4 text-sm text-muted">Fotos</p>
-      <ul data-pedido-items class="divide-y divide-line/80 border-y border-line/80"></ul>
+      <ul data-pedido-items class="divide-y divide-line border-y border-line"></ul>
     </div>
 
     <div class="flex flex-wrap gap-4">
       <a
         href={withBase('eventos/')}
-        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+        class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
       >
         ← Voltar aos eventos
       </a>
       <a
         href={withBase('minhas-fotos/')}
-        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+        class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
       >
         Minhas fotos
       </a>
       <a
         href={withBase()}
-        class="text-xs uppercase tracking-[0.2em] text-muted transition hover:text-paper"
+        class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
       >
         Início
       </a>
@@ -146,15 +146,15 @@ import { withBase } from '../lib/paths';
         const price = escapeHtml(formatBRL(item.unitPrice));
         const href = item.downloadUrl ? escapeHtml(item.downloadUrl) : '';
         const action = href
-          ? `<a href="${href}" class="border border-paper/40 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-paper transition hover:border-paper hover:bg-paper/5">Baixar</a>`
+          ? `<a href="${href}" class="border border-ink/25 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-ink transition hover:border-ink hover:bg-paper-tint">Baixar</a>`
           : status === 'approved'
-            ? `<a href="${escapeHtml(minhasFotos)}" class="border border-paper/40 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-paper transition hover:border-paper hover:bg-paper/5">Minhas fotos</a>`
+            ? `<a href="${escapeHtml(minhasFotos)}" class="border border-ink/25 px-3 py-2 text-[0.65rem] uppercase tracking-[0.18em] text-ink transition hover:border-ink hover:bg-paper-tint">Minhas fotos</a>`
             : `<span class="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Aguardando</span>`;
 
         return `
       <li class="flex items-start justify-between gap-4 py-4">
         <div>
-          <p class="font-display text-lg tracking-wide text-paper">${title}</p>
+          <p class="font-display text-lg tracking-tight text-ink">${title}</p>
           <p class="mt-1 text-sm text-muted">${price}</p>
         </div>
         ${action}

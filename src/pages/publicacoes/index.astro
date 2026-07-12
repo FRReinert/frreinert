@@ -10,7 +10,7 @@ const publicacoes = (await getCollection('publicacoes')).sort(
 
 <Layout title="Publicações | Fabricio Roberto Reinert" description="Todas as publicações">
   <header class="mb-14 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-wide md:text-5xl">Publicações</h1>
+    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Publicações</h1>
     <p class="mt-4 text-muted">Texto, fotografia e vídeo.</p>
   </header>
 
@@ -36,7 +36,7 @@ const publicacoes = (await getCollection('publicacoes')).sort(
               >
                 {item.data.date.toLocaleDateString('pt-BR')}
               </time>
-              <h2 class="mt-2 font-display text-2xl tracking-wide text-paper transition group-hover:text-paper/80">
+              <h2 class="mt-2 font-display text-2xl tracking-tight text-ink transition group-hover:text-ink-soft">
                 {item.data.title}
               </h2>
               <p class="mt-1 text-sm text-muted">{item.data.description}</p>

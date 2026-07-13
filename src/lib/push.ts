@@ -2,8 +2,8 @@
  * Web Push via OneSignal (Custom Code / Web SDK v16).
  * Docs: https://documentation.onesignal.com/docs/en/web-sdk-setup
  *
- * Disparo automático de “nova publicação”:
- * GitHub Action + scripts/notify-new-posts.mjs
+ * SW na raiz + scope `/` — necessário para o SDK completar o opt-in
+ * enquanto o visitante está em qualquer página do site.
  */
 export const PUSH = {
   /** App ID público (Settings → Keys & IDs). */
@@ -11,12 +11,6 @@ export const PUSH = {
   /** Segmento padrão “todos os inscritos” no OneSignal. */
   segment: 'Subscribed Users',
   siteOrigin: 'https://frreinert.com.br',
-  /**
-   * Path relativo (sem barra inicial) — subdirectory recomendado
-   * para não conflitar com PWA/outros service workers.
-   */
-  serviceWorkerPath: 'push/onesignal/OneSignalSDKWorker.js',
-  serviceWorkerScope: '/push/onesignal/',
 } as const;
 
 /** App ID efetivo: env sobrescreve (útil p/ app de localhost separado). */

@@ -40,6 +40,8 @@
     const w = window as unknown as { OneSignalDeferred?: Deferred };
     w.OneSignalDeferred = w.OneSignalDeferred || [];
 
+    let ready: OneSignalClient | null = null;
+
     function isDenied(os: OneSignalClient) {
       return (
         os.Notifications.permissionNative === 'denied' ||
@@ -58,22 +60,86 @@
       btn.disabled = os.User.PushSubscription.optedIn || isDenied(os);
     }
 
+    function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+      return new Promise((resolve, reject) => {
+        const t = window.setTimeout(() => reject(new Error('timeout')), ms);
+        promise.then(
+          (v) => {
+            window.clearTimeout(t);
+            resolve(v);
+          },
+          (e) => {
+            window.clearTimeout(t);
+            reject(e);
+          },
+        );
+      });
+    }
+
     w.OneSignalDeferred.push(async (OneSignal) => {
+      ready = OneSignal;
       refresh(OneSignal);
       OneSignal.User.PushSubscription.addEventListener('change', () => {
         refresh(OneSignal);
       });
-      btn.addEventListener('click', async () => {
-        if (OneSignal.User.PushSubscription.optedIn || isDenied(OneSignal)) return;
-        btn.disabled = true;
-        btn.textContent = 'Aguardando…';
-        try {
-          await OneSignal.Notifications.requestPermission();
-        } catch {
-          // prompt fechado / bloqueado
-        }
+    });
+
+    btn.addEventListener('click', async () => {
+      if (!ready) {
+        btn.textContent = 'Carregando…';
+        await new Promise<void>((resolve) => {
+          if (document.documentElement.dataset.onesignal === 'ready') {
+            resolve();
+            return;
+          }
+          const onReady = () => {
+            cleanup();
+            resolve();
+          };
+          const onError = () => {
+            cleanup();
+            resolve();
+          };
+          const cleanup = () => {
+            window.removeEventListener('onesignal:ready', onReady);
+            window.removeEventListener('onesignal:error', onError);
+          };
+          window.addEventListener('onesignal:ready', onReady, { once: true });
+          window.addEventListener('onesignal:error', onError, { once: true });
+          window.setTimeout(() => {
+            cleanup();
+            resolve();
+          }, 8000);
+        });
+      }
+
+      const OneSignal = ready;
+      if (!OneSignal) {
+        btn.disabled = false;
+        btn.textContent = 'Tentar de novo';
+        console.error('[OneSignal] SDK não inicializou');
+        return;
+      }
+
+      if (OneSignal.User.PushSubscription.optedIn || isDenied(OneSignal)) {
         refresh(OneSignal);
-      });
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Aguardando…';
+      try {
+        await withTimeout(OneSignal.Notifications.requestPermission(), 20000);
+      } catch (err) {
+        console.error('[OneSignal] requestPermission', err);
+        btn.disabled = false;
+        btn.textContent =
+          err instanceof Error && err.message === 'timeout'
+            ? 'Falhou — tente de novo'
+            : 'Tentar de novo';
+        return;
+      }
+      refresh(OneSignal);
     });
   }
 </script>

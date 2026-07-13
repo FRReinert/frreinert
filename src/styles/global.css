@@ -77,3 +77,12 @@ body {
 .thumb-zoom:hover img {
   transform: scale(1.04);
 }
+
+.giscus-section .giscus {
+  min-height: 12rem;
+}
+
+.giscus-section .giscus-frame {
+  width: 100%;
+  border: 0;
+}

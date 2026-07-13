@@ -60,7 +60,8 @@ Browser
 
 Contrato do CLI (`publish:post`): [TARGET-PUBLICACOES.md](./TARGET-PUBLICACOES.md). Guia operacional promovido: [`docs/PUBLICACOES.md`](../PUBLICACOES.md) (passo 06).
 
-CDN atual (dev / Pages): `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev` (`.env.example`, `deploy.yml`).
+CDN atual (dev / Pages): `https://cdn.frreinert.com.br` (`.env.example`, `deploy.yml`).  
+Fallback / rollback: `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev`.
 
 ## Critérios globais de sucesso
 

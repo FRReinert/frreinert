@@ -16,10 +16,12 @@ npm run publish:post -- … → git push do .md → conferir site
 Em produção (e no `npm run dev` com `.env`), as URLs usam `PUBLIC_MEDIA_BASE` — CDN R2 **sem** Worker:
 
 ```text
-https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev
+https://cdn.frreinert.com.br
 ```
 
 (mesmo valor em `.env.example` e no workflow de deploy)
+
+Rollback: `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev` (reverter env + redeploy).
 
 **Eventos (fotos à venda) são outro fluxo:** `npm run publish:evento` — ver [COMMERCE.md](./COMMERCE.md).
 
@@ -134,9 +136,10 @@ O GitHub Actions faz o build/deploy do Pages (`PUBLIC_MEDIA_BASE` já no workflo
 4. Hard refresh se cache antigo
 
 ```sh
-curl -sI "$PUBLIC_MEDIA_BASE/audio/seu-arquivo.mp3"
+# Preferir GET ao validar cache (HEAD em R2 custom domain pode mostrar DYNAMIC)
+curl -sD - -o /dev/null "$PUBLIC_MEDIA_BASE/audio/seu-arquivo.mp3"
 # ou:
-curl -sI "https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev/audio/seu-arquivo.mp3"
+curl -sD - -o /dev/null "https://cdn.frreinert.com.br/audio/seu-arquivo.mp3"
 ```
 
 ---

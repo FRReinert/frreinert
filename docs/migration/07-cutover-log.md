@@ -7,8 +7,10 @@
 CDN canônico:
 
 ```text
-https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev
+https://cdn.frreinert.com.br
 ```
+
+Fallback / rollback: `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev`
 
 ---
 
@@ -16,9 +18,9 @@ https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev
 
 ### Infra
 
-- [ ] DNS / custom domain R2 ativo e estável — **não feito.** Conta sem zona para `media.*`; continua `r2.dev` (rate-limited / non-production). Ver [01-cdn-notes.md](./01-cdn-notes.md).
-- [x] `deploy.yml` em `feat/jekyl-migration` com `PUBLIC_MEDIA_BASE` = CDN (`pub-08de7bb0…r2.dev`), **não** Worker
-- [x] Objetos antigos OK no CDN novo (imagem + áudio Range + CORS)
+- [x] DNS / custom domain R2 ativo e estável — `cdn.frreinert.com.br` → `frreinert-media` (Active + Cache Rule). Ver [01-cdn-notes.md](./01-cdn-notes.md).
+- [x] `deploy.yml` / `.env.example` com `PUBLIC_MEDIA_BASE` = `https://cdn.frreinert.com.br` (**não** Worker)
+- [x] Objetos antigos OK no CDN (imagem + áudio Range + CORS); `r2.dev` mantido como fallback
 
 ### Smoke estático
 
@@ -153,23 +155,9 @@ Ou Dashboard → Workers & Pages → cada Worker → Delete / Disable.
 2. App usada no CMS (callback `…/frreinert-decap-oauth…/callback`) → Delete / Revoke  
 3. Confirmar que `/admin/` em produção retorna 404 após o deploy do branch
 
-### 3. (Opcional) Custom domain R2
+### 3. Custom domain R2
 
-Quando houver zona Cloudflare:
-
-```sh
-npx wrangler r2 bucket domain add frreinert-media \
-  --domain media.SEU_DOMINIO \
-  --zone-id <ZONE_ID> \
-  --force
-```
-
-Atualizar `PUBLIC_MEDIA_BASE` em `.env.example`, `deploy.yml` e docs; reaplicar CORS se necessário:
-
-```sh
-npx wrangler r2 bucket cors set frreinert-media \
-  --file scripts/r2/frreinert-media-cors.json --force
-```
+**Feito (2026-07-13):** `cdn.frreinert.com.br` conectado ao `frreinert-media` (Active), Cache Rule + Tiered Cache. `PUBLIC_MEDIA_BASE` aponta para o CDN; `r2.dev` permanece Enabled como rollback.
 
 ### 4. Merge
 

@@ -29,8 +29,10 @@ Isso otimiza imagens, sobe mídia ao bucket **`frreinert-media`** e escreve `src
 Mídia pública é servida pelo CDN R2 (`PUBLIC_MEDIA_BASE`), sem Worker:
 
 ```text
-https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev
+https://cdn.frreinert.com.br
 ```
+
+Rollback operacional (mesmo bucket): `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev`
 
 SVGs de pagamento em `public/images/payment/` continuam versionados.
 

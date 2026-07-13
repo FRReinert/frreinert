@@ -35,9 +35,9 @@ Produção serve mídia sem Worker; CMS morto; comércio OK; branch pronto para 
 
 ### Infra
 
-- [ ] DNS / custom domain R2 ativo e estável
-- [x] `deploy.yml` em `feat/jekyl-migration` com `PUBLIC_MEDIA_BASE` correto
-- [x] Objetos antigos (`images/uploads/...`, `audio/...`) OK no CDN novo
+- [x] DNS / custom domain R2 ativo e estável (`cdn.frreinert.com.br`)
+- [x] `deploy.yml` / `.env.example` com `PUBLIC_MEDIA_BASE` = `https://cdn.frreinert.com.br`
+- [x] Objetos antigos (`images/uploads/...`, `audio/...`) OK no CDN; `r2.dev` como rollback
 
 ### Smoke estático
 

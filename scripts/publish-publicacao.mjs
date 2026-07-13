@@ -20,7 +20,7 @@ const root = path.resolve(__dirname, '..');
 const publicacoesDir = path.join(root, 'src/content/publicacoes');
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const DEFAULT_MEDIA_BASE = 'https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev';
+const DEFAULT_MEDIA_BASE = 'https://cdn.frreinert.com.br';
 
 function parseArgs(argv) {
   const out = {

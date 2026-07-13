@@ -66,6 +66,45 @@ body {
   margin-bottom: 0.5em;
 }
 
+.prose-article h2 {
+  font-size: 1.5rem;
+}
+
+.prose-article h3 {
+  font-size: 1.25rem;
+}
+
+.prose-article img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em 0 0.35em;
+}
+
+.prose-article ul,
+.prose-article ol {
+  margin: 1em 0;
+  padding-left: 1.35em;
+}
+
+.prose-article li + li {
+  margin-top: 0.35em;
+}
+
+.prose-article blockquote {
+  margin: 1.5em 0;
+  padding-left: 1em;
+  border-left: 2px solid var(--color-line);
+  color: var(--color-muted);
+}
+
+.prose-article > em,
+.prose-article p > em {
+  color: var(--color-muted);
+  font-size: 0.95em;
+}
+
 .thumb-zoom {
   overflow: hidden;
 }

@@ -39,3 +39,6 @@ public/images/uploads/**
 !public/images/uploads/placeholder.svg
 public/audio/**
 !public/audio/.gitkeep
+
+# Penoestribo migration staging
+.migrate-cache/

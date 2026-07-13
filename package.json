@@ -16,6 +16,7 @@
     "publish:evento": "node scripts/ingest-event-photos.mjs",
     "optimize-images": "node scripts/optimize-blog-images.mjs",
     "publish:post": "node scripts/publish-publicacao.mjs",
+    "migrate:penoestribo": "node scripts/migrate-penoestribo.mjs",
     "sync-media": "node scripts/sync-media.mjs",
     "sync-media:prune": "node scripts/sync-media.mjs --prune"
   },
@@ -25,5 +26,9 @@
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.2",
     "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "node-html-parser": "^9.0.0",
+    "turndown": "^7.2.4"
   }
 }

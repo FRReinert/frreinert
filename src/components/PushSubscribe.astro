@@ -1,0 +1,79 @@
+---
+/**
+ * Opt-in manual às notificações push (OneSignal Custom Code).
+ * Prompt nativo só sob demanda — sem slide-in automático do dashboard.
+ */
+---
+
+<li>
+  <button
+    type="button"
+    data-push-subscribe
+    class="text-left uppercase tracking-[0.1em] transition hover:text-ink disabled:cursor-default disabled:opacity-60"
+  >
+    Notificações
+  </button>
+</li>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-push-subscribe]');
+  if (btn) {
+    type OneSignalClient = {
+      Notifications: {
+        permission: boolean | 'default' | 'denied' | 'granted';
+        permissionNative?: NotificationPermission;
+        requestPermission: () => Promise<boolean>;
+      };
+      User: {
+        PushSubscription: {
+          optedIn: boolean;
+          id?: string | null;
+          addEventListener: (
+            type: 'change',
+            listener: (event: { current: { id?: string | null; optedIn?: boolean } }) => void,
+          ) => void;
+        };
+      };
+    };
+
+    type Deferred = Array<(os: OneSignalClient) => void | Promise<void>>;
+    const w = window as unknown as { OneSignalDeferred?: Deferred };
+    w.OneSignalDeferred = w.OneSignalDeferred || [];
+
+    function isDenied(os: OneSignalClient) {
+      return (
+        os.Notifications.permissionNative === 'denied' ||
+        os.Notifications.permission === 'denied'
+      );
+    }
+
+    function labelFor(os: OneSignalClient) {
+      if (os.User.PushSubscription.optedIn) return 'Notificações ativas';
+      if (isDenied(os)) return 'Notificações bloqueadas';
+      return 'Ativar notificações';
+    }
+
+    function refresh(os: OneSignalClient) {
+      btn.textContent = labelFor(os);
+      btn.disabled = os.User.PushSubscription.optedIn || isDenied(os);
+    }
+
+    w.OneSignalDeferred.push(async (OneSignal) => {
+      refresh(OneSignal);
+      OneSignal.User.PushSubscription.addEventListener('change', () => {
+        refresh(OneSignal);
+      });
+      btn.addEventListener('click', async () => {
+        if (OneSignal.User.PushSubscription.optedIn || isDenied(OneSignal)) return;
+        btn.disabled = true;
+        btn.textContent = 'Aguardando…';
+        try {
+          await OneSignal.Notifications.requestPermission();
+        } catch {
+          // prompt fechado / bloqueado
+        }
+        refresh(OneSignal);
+      });
+    });
+  }
+</script>

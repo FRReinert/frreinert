@@ -21,8 +21,10 @@ https://cdn.frreinert.com.br
 
 (mesmo valor em `.env.example` e no workflow de deploy)
 
-**Feed RSS (assinatura / Chrome Follow):** `https://frreinert.com.br/rss.xml`  
-Metadados em `src/lib/feed.ts`. Cada `publish:post` + deploy regenera o feed automaticamente. A mesma URL serve depois para RSS-to-push (opção Web Push), sem mudar o contrato.
+**Feed RSS (leitores / Chrome Follow):** `https://frreinert.com.br/rss.xml`  
+Metadados em `src/lib/feed.ts`. Cada `publish:post` + deploy regenera o feed automaticamente.
+
+**Web Push (notificação no navegador):** OneSignal + Action no deploy — ver [PUSH.md](./PUSH.md). Um `.md` **novo** em `publicacoes/` dispara o aviso aos inscritos.
 
 Rollback: `https://pub-08de7bb0447846519a48ee1f1e9bf92a.r2.dev` (reverter env + redeploy).
 

@@ -16,6 +16,7 @@
     "publish:evento": "node scripts/ingest-event-photos.mjs",
     "optimize-images": "node scripts/optimize-blog-images.mjs",
     "publish:post": "node scripts/publish-publicacao.mjs",
+    "notify:posts": "node scripts/notify-new-posts.mjs",
     "migrate:penoestribo": "node scripts/migrate-penoestribo.mjs",
     "sync-media": "node scripts/sync-media.mjs",
     "sync-media:prune": "node scripts/sync-media.mjs --prune"

@@ -33,6 +33,8 @@ jobs:
       - name: Build
         env:
           PUBLIC_MEDIA_BASE: https://cdn.frreinert.com.br
+          # App ID é público; var opcional só para override (ex. app de teste).
+          PUBLIC_ONESIGNAL_APP_ID: ${{ vars.PUBLIC_ONESIGNAL_APP_ID }}
         run: npm run build
 
       - name: Upload Pages artifact
@@ -50,3 +52,54 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # Web Push: só arquivos .md *novos* em publicacoes/ (não reenvia em edição).
+  notify:
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Notify new publications
+        env:
+          ONESIGNAL_APP_ID: ${{ vars.PUBLIC_ONESIGNAL_APP_ID }}
+          ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
+          PUBLIC_MEDIA_BASE: https://cdn.frreinert.com.br
+          SITE_URL: https://frreinert.com.br
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "Initial/unknown before SHA — skip push notify"
+            exit 0
+          fi
+
+          FILES=$(git diff --name-only --diff-filter=A "$BEFORE_SHA" "$AFTER_SHA" -- 'src/content/publicacoes/*.md' || true)
+          if [[ -z "$FILES" ]]; then
+            echo "No new publication files"
+            exit 0
+          fi
+
+          echo "New posts:"
+          echo "$FILES"
+
+          if [[ -z "$ONESIGNAL_REST_API_KEY" ]]; then
+            echo "Secret ONESIGNAL_REST_API_KEY ausente — skip push notify"
+            exit 0
+          fi
+
+          # shellcheck disable=SC2086
+          npm run notify:posts -- $FILES

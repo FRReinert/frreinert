@@ -1,6 +1,7 @@
 ---
 import { FEED } from '../lib/feed';
 import { assetUrl, withBase } from '../lib/paths';
+import PushSubscribe from './PushSubscribe.astro';
 
 const year = new Date().getFullYear();
 
@@ -35,6 +36,7 @@ const payments = [
           <li>
             <a href={withBase(FEED.path)} class="transition hover:text-ink">RSS</a>
           </li>
+          <PushSubscribe />
         </ul>
       </div>
 

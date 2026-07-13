@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { FEED, feedUrl } from '../lib/feed';
 import { withBase } from '../lib/paths';
 import CartBadge from '../components/CartBadge.astro';
+import OneSignalBootstrap from '../components/OneSignalBootstrap.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 
 interface Props {
@@ -34,6 +35,8 @@ const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
       title={FEED.title}
       href={rssHref}
     />
+    <link rel="manifest" href={withBase('manifest.webmanifest')} />
+    <meta name="theme-color" content="#1a1a1a" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -82,6 +85,7 @@ const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
     </main>
 
     <SiteFooter />
+    <OneSignalBootstrap />
 
     <button
       type="button"

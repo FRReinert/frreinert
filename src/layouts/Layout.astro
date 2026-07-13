@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { FEED, feedUrl } from '../lib/feed';
 import { withBase } from '../lib/paths';
 import CartBadge from '../components/CartBadge.astro';
 import SiteFooter from '../components/SiteFooter.astro';
@@ -13,6 +14,8 @@ const {
   title = 'Fabricio Roberto Reinert',
   description = 'Página pessoal — sem algoritmo, sem viralizar, sem obsessão por métricas. Aqui conto histórias com fotografia, filmagem amadora e humor duvidoso.',
 } = Astro.props;
+
+const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
 ---
 
 <!doctype html>
@@ -25,6 +28,12 @@ const {
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={FEED.title}
+      href={rssHref}
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

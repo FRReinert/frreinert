@@ -1,4 +1,5 @@
 ---
+import { FEED } from '../lib/feed';
 import { assetUrl, withBase } from '../lib/paths';
 
 const year = new Date().getFullYear();
@@ -30,6 +31,9 @@ const payments = [
           </li>
           <li>
             <a href={withBase('carrinho/')} class="transition hover:text-ink">Carrinho</a>
+          </li>
+          <li>
+            <a href={withBase(FEED.path)} class="transition hover:text-ink">RSS</a>
           </li>
         </ul>
       </div>

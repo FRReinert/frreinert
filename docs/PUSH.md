@@ -41,10 +41,23 @@ Você: npm run publish:post → push do .md novo → deploy Pages
 
 Só quando o commit em `main` **adiciona** um `.md` em `src/content/publicacoes/`.
 
+## iPhone / iPad (iOS 16.4+)
+
+No Mac/Windows o opt-in na aba do browser funciona. **No iPhone não:** a Apple só libera Web Push depois que o site vira app na Tela de Início.
+
+1. Safari/Chrome/Edge no iPhone → site → **Compartilhar** → **Adicionar à Tela de Início**.
+2. Abrir pelo **ícone** (não pela aba do browser).
+3. Rodapé → **Ativar notificações** → Allow.
+
+O botão no rodapé detecta iOS na aba do browser e mostra esse caminho em vez de falhar com “Tentar de novo”.
+
+Ref: [Web push for iOS (OneSignal)](https://documentation.onesignal.com/docs/en/web-push-for-ios).
+
 ## Troubleshoot
 
 | Sintoma | Checagem |
 | --- | --- |
+| iPhone: “Tentar de novo” / falha ao ativar | Abrir pelo ícone da Tela de Início (não na aba); iOS 16.4+ |
 | “Aguardando…” sem prompt | Scope do SW deve ser `/` (não subdirectory); SW acessível na raiz |
 | Prompt não abre | HTTPS, não anônimo; permissão do site no browser |
 | SW 404 | `https://frreinert.com.br/OneSignalSDKWorker.js` |

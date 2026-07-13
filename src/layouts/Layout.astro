@@ -29,6 +29,10 @@ const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    {/* Necessário para Web Push no iOS (Add to Home Screen → standalone). */}
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Reinert" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <link
       rel="alternate"
       type="application/rss+xml"

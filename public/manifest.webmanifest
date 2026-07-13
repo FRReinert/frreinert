@@ -1,4 +1,6 @@
 {
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "id": "/?homescreen=1",
   "name": "Fabricio Reinert",
   "short_name": "Reinert",
   "description": "Fotolog — fotografia, viagens e histórias sem algoritmo.",
@@ -9,15 +11,15 @@
   "lang": "pt-BR",
   "icons": [
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

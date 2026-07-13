@@ -2,6 +2,10 @@
 /**
  * Opt-in manual às notificações push (OneSignal Custom Code).
  * Prompt nativo só sob demanda — sem slide-in automático do dashboard.
+ *
+ * iOS/iPadOS 16.4+: Web Push só funciona com o site na Tela de Início
+ * (aberto pelo ícone, não pela aba do Safari/Chrome).
+ * @see https://documentation.onesignal.com/docs/en/web-push-for-ios
  */
 ---
 
@@ -13,10 +17,16 @@
   >
     Notificações
   </button>
+  <p
+    data-push-ios-hint
+    hidden
+    class="mt-1.5 max-w-[16rem] normal-case tracking-normal text-[0.6rem] leading-snug text-muted"
+  ></p>
 </li>
 
 <script>
   const btn = document.querySelector<HTMLButtonElement>('[data-push-subscribe]');
+  const iosHint = document.querySelector<HTMLParagraphElement>('[data-push-ios-hint]');
   if (btn) {
     type OneSignalClient = {
       Notifications: {
@@ -42,6 +52,51 @@
 
     let ready: OneSignalClient | null = null;
 
+    /** iPhone/iPad (inclui iPadOS com UA de desktop). */
+    function isAppleMobile() {
+      const ua = navigator.userAgent;
+      if (/iPhone|iPad|iPod/i.test(ua)) return true;
+      return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    }
+
+    /** Aberto pelo ícone da Tela de Início (PWA), não pela aba do browser. */
+    function isStandaloneDisplay() {
+      const nav = navigator as Navigator & { standalone?: boolean };
+      return (
+        nav.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches
+      );
+    }
+
+    function pushApisAvailable() {
+      return (
+        'Notification' in window &&
+        'serviceWorker' in navigator &&
+        'PushManager' in window
+      );
+    }
+
+    /** No iOS, push na aba do browser não existe — precisa da Tela de Início. */
+    function needsHomeScreenInstall() {
+      return isAppleMobile() && !isStandaloneDisplay();
+    }
+
+    const IOS_HINT =
+      'No iPhone: toque em Compartilhar → Adicionar à Tela de Início. Abra pelo ícone e toque de novo aqui.';
+
+    function showIosHint() {
+      if (!iosHint) return;
+      iosHint.hidden = false;
+      iosHint.textContent = IOS_HINT;
+    }
+
+    function hideIosHint() {
+      if (!iosHint) return;
+      iosHint.hidden = true;
+      iosHint.textContent = '';
+    }
+
     function isDenied(os: OneSignalClient) {
       return (
         os.Notifications.permissionNative === 'denied' ||
@@ -52,12 +107,18 @@
     function labelFor(os: OneSignalClient) {
       if (os.User.PushSubscription.optedIn) return 'Notificações ativas';
       if (isDenied(os)) return 'Notificações bloqueadas';
+      if (needsHomeScreenInstall()) return 'Notificações (iPhone)';
       return 'Ativar notificações';
     }
 
     function refresh(os: OneSignalClient) {
       btn.textContent = labelFor(os);
       btn.disabled = os.User.PushSubscription.optedIn || isDenied(os);
+      if (needsHomeScreenInstall() && !os.User.PushSubscription.optedIn && !isDenied(os)) {
+        showIosHint();
+      } else {
+        hideIosHint();
+      }
     }
 
     function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -76,6 +137,11 @@
       });
     }
 
+    if (needsHomeScreenInstall()) {
+      btn.textContent = 'Notificações (iPhone)';
+      showIosHint();
+    }
+
     w.OneSignalDeferred.push(async (OneSignal) => {
       ready = OneSignal;
       refresh(OneSignal);
@@ -85,6 +151,22 @@
     });
 
     btn.addEventListener('click', async () => {
+      if (needsHomeScreenInstall()) {
+        showIosHint();
+        btn.textContent = 'Ver instruções abaixo';
+        window.setTimeout(() => {
+          if (needsHomeScreenInstall()) btn.textContent = 'Notificações (iPhone)';
+        }, 2500);
+        return;
+      }
+
+      if (!pushApisAvailable()) {
+        btn.disabled = false;
+        btn.textContent = 'Não suportado neste browser';
+        console.error('[OneSignal] Notification/PushManager indisponível');
+        return;
+      }
+
       if (!ready) {
         btn.textContent = 'Carregando…';
         await new Promise<void>((resolve) => {

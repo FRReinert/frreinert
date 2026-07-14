@@ -4,7 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import PublicationMedia from '../../components/PublicationMedia.astro';
 import PublicationAudio from '../../components/PublicationAudio.astro';
 import PublicationShare from '../../components/PublicationShare.astro';
-import GiscusComments from '../../components/GiscusComments.astro';
+import PostComments from '../../components/PostComments.astro';
 import { assetUrl, withBase } from '../../lib/paths';
 import { parseSpotifyUrl } from '../../lib/spotify';
 
@@ -63,6 +63,6 @@ const shareUrl = new URL(Astro.url.pathname, Astro.site).href;
 
     <PublicationAudio audioFile={item.data.audio_file} spotifyUrl={item.data.spotify_url} />
 
-    <GiscusComments />
+    <PostComments slug={item.id} />
   </article>
 </Layout>

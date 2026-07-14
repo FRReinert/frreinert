@@ -53,6 +53,6 @@ Talvez esteja na hora de voltar a fazer algumas coisas simplesmente porque elas 
 
 ## Notas finais
 
-Deixei um pequeno botão no rodapé para quem quiser ser avisado sobre novas publicações  e também um espaço para comentários, sem moderação alguma, livre pra xingar o coleguinha sem qualquer pudor 
+Deixei um pequeno botão no rodapé caso queira ser avisado sobre novas publicações e também um espaço para comentários, sem moderação alguma, livre pra xingar o coleguinha sem qualquer pudor 
 
 Abraço :D

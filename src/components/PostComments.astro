@@ -9,6 +9,8 @@ interface Props {
 
 const { slug } = Astro.props;
 
+const turnstileSiteKey = (import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined)?.trim();
+
 const inputClass =
   'w-full border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-ink/50 focus:outline-none';
 ---
@@ -18,6 +20,7 @@ const inputClass =
   aria-label="Comentários"
   data-post-comments
   data-slug={slug}
+  data-turnstile-site-key={turnstileSiteKey || undefined}
 >
   <h2 class="font-display text-xl tracking-tight text-ink md:text-2xl">Comentários</h2>
   <p class="mt-2 text-sm text-muted">Deixe um comentário — Não precisa criar conta.</p>
@@ -58,6 +61,20 @@ const inputClass =
         autocomplete="off"
       />
     </div>
+    {turnstileSiteKey && (
+      <>
+        <script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          async
+          defer></script>
+        <div
+          class="cf-turnstile"
+          data-sitekey={turnstileSiteKey}
+          data-action="comment"
+          data-theme="light"
+        />
+      </>
+    )}
     <div class="flex items-center gap-4">
       <button
         type="submit"
@@ -79,6 +96,12 @@ const inputClass =
 <script>
   import { fetchComments, submitComment, type PostComment } from '../lib/comments';
 
+  declare global {
+    interface Window {
+      turnstile?: { reset: (widgetId?: string) => void };
+    }
+  }
+
   (function () {
     const root = document.querySelector<HTMLElement>('[data-post-comments]');
     if (!root) return;
@@ -89,6 +112,7 @@ const inputClass =
     const feedback = root.querySelector<HTMLElement>('[data-comments-feedback]');
     const status = root.querySelector<HTMLElement>('[data-comments-status]');
     const list = root.querySelector<HTMLUListElement>('[data-comments-items]');
+    const turnstileRequired = Boolean(root.dataset.turnstileSiteKey);
     if (!slug || !form || !submitBtn || !feedback || !status || !list) return;
 
     const dateFmt = new Intl.DateTimeFormat('pt-BR', {
@@ -168,20 +192,31 @@ const inputClass =
         return;
       }
 
+      const turnstileToken = turnstileRequired
+        ? form!.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]')?.value?.trim() ||
+          ''
+        : undefined;
+      if (turnstileRequired && !turnstileToken) {
+        feedback!.textContent = 'Complete a verificação de segurança.';
+        return;
+      }
+
       submitBtn!.disabled = true;
       feedback!.textContent = 'Enviando…';
 
-      void submitComment({ slug, name, message, website }).then((result) => {
+      void submitComment({ slug, name, message, website, turnstileToken }).then((result) => {
         submitBtn!.disabled = false;
         if (result.ok) {
           feedback!.textContent = 'Comentário publicado!';
           form!.reset();
+          window.turnstile?.reset();
           render(result.comments);
           window.setTimeout(() => {
             feedback!.textContent = '';
           }, 4000);
         } else {
           feedback!.textContent = result.error;
+          window.turnstile?.reset();
         }
       });
     });

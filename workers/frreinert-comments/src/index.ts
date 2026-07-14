@@ -8,7 +8,12 @@
 
 export interface Env {
   COMMENTS: KVNamespace;
+  TURNSTILE_SECRET_KEY?: string;
 }
+
+type TurnstileVerifyResult = {
+  success: boolean;
+};
 
 type Comment = {
   name: string;
@@ -33,8 +38,19 @@ const RATE_COOLDOWN_SEC = 30; // 1 comentário a cada 30s por IP
 const RATE_HOURLY_LIMIT = 10; // máx. por hora por IP
 const RATE_HOURLY_WINDOW_SEC = 60 * 60;
 
+function isAllowedOrigin(origin: string | null): boolean {
+  return Boolean(origin && ALLOWED_ORIGINS.includes(origin));
+}
+
+function rejectIfOriginNotAllowed(origin: string | null): Response | null {
+  if (!isAllowedOrigin(origin)) {
+    return json({ error: 'Origin não permitida.' }, 403, origin);
+  }
+  return null;
+}
+
 function corsHeaders(origin: string | null): HeadersInit {
-  const allowed = Boolean(origin && ALLOWED_ORIGINS.includes(origin));
+  const allowed = isAllowedOrigin(origin);
   const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -59,6 +75,34 @@ function json(data: unknown, status = 200, origin: string | null = null) {
 
 function clientIp(request: Request) {
   return request.headers.get('CF-Connecting-IP') || 'unknown';
+}
+
+async function verifyTurnstile(
+  env: Env,
+  token: string,
+  ip: string,
+): Promise<boolean> {
+  const secret = env.TURNSTILE_SECRET_KEY?.trim();
+  if (!secret) return true;
+
+  if (!token) return false;
+
+  const body = new URLSearchParams({
+    secret,
+    response: token,
+    remoteip: ip,
+  });
+
+  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+
+  if (!res.ok) return false;
+
+  const data = (await res.json().catch(() => null)) as TurnstileVerifyResult | null;
+  return Boolean(data?.success);
 }
 
 async function readComments(env: Env, slug: string): Promise<Comment[]> {
@@ -109,7 +153,16 @@ async function handleGet(request: Request, env: Env, origin: string | null) {
 }
 
 async function handlePost(request: Request, env: Env, origin: string | null) {
-  let body: { slug?: string; name?: string; message?: string; website?: string };
+  const originRejected = rejectIfOriginNotAllowed(origin);
+  if (originRejected) return originRejected;
+
+  let body: {
+    slug?: string;
+    name?: string;
+    message?: string;
+    website?: string;
+    turnstileToken?: string;
+  };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -143,7 +196,17 @@ async function handlePost(request: Request, env: Env, origin: string | null) {
     );
   }
 
-  if (await isRateLimited(env, clientIp(request))) {
+  const ip = clientIp(request);
+  const turnstileToken = (body?.turnstileToken || '').trim();
+  if (!(await verifyTurnstile(env, turnstileToken, ip))) {
+    return json(
+      { error: 'Verificação de segurança falhou. Tente novamente.' },
+      403,
+      origin,
+    );
+  }
+
+  if (await isRateLimited(env, ip)) {
     return json(
       { error: 'Muitos comentários em sequência. Aguarde um pouco e tente novamente.' },
       429,
@@ -183,6 +246,7 @@ export default {
           service: 'frreinert-comments',
           routes: ['GET /api/comments?slug=...', 'POST /api/comments'],
           kv: Boolean(env.COMMENTS),
+          turnstileConfigured: Boolean(env.TURNSTILE_SECRET_KEY),
         },
         200,
         origin,

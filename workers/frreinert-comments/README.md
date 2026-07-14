@@ -8,16 +8,33 @@ uma chave por publicação: `comments:<slug>` (array JSON).
 | Rota | Descrição |
 |------|-----------|
 | `GET /api/comments?slug=<slug>` | Lista comentários da publicação |
-| `POST /api/comments` | Cria comentário — body `{ slug, name, message, website }` |
+| `POST /api/comments` | Cria comentário — body `{ slug, name, message, website, turnstileToken }` |
 
 O campo `website` é honeypot: se vier preenchido, responde ok sem gravar.
 
 ## Anti-spam
 
+- Cloudflare Turnstile (widget no form + siteverify no Worker)
 - Rate limit por IP: 1 comentário / 30s e máx. 10 / hora
 - Honeypot no form
 - Máx. 500 comentários por publicação
-- CORS restrito a frreinert.com.br / localhost
+- CORS e validação de `Origin` no servidor (POST) — frreinert.com.br / localhost:4321
+
+## Turnstile (produção)
+
+1. Dashboard → Turnstile → criar widget **Managed**, domínios:
+   `frreinert.com.br`, `localhost`, `127.0.0.1`
+2. Site key → GitHub repo **Variables** `PUBLIC_TURNSTILE_SITE_KEY` (build Pages) e `.env` local
+3. Secret key → secret do Worker:
+
+```bash
+cd workers/frreinert-comments
+echo '<secret>' | npx wrangler secret put TURNSTILE_SECRET_KEY
+npx wrangler deploy
+```
+
+Sem `TURNSTILE_SECRET_KEY` no Worker, a verificação fica desligada (útil só em dev).
+Sem `PUBLIC_TURNSTILE_SITE_KEY` no build, o widget não aparece no form.
 
 ## Setup (uma vez)
 

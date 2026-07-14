@@ -35,6 +35,7 @@ jobs:
           PUBLIC_MEDIA_BASE: https://cdn.frreinert.com.br
           # App ID é público; var opcional só para override (ex. app de teste).
           PUBLIC_ONESIGNAL_APP_ID: ${{ vars.PUBLIC_ONESIGNAL_APP_ID }}
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
         run: npm run build
 
       - name: Upload Pages artifact

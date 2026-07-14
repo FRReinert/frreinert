@@ -39,6 +39,7 @@ export async function submitComment(input: {
   name: string;
   message: string;
   website: string;
+  turnstileToken?: string;
 }): Promise<CommentsResult> {
   try {
     const res = await fetch(`${COMMENTS_API_BASE}/api/comments`, {

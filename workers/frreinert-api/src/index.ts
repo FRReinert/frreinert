@@ -89,8 +89,19 @@ const RATE_ORDERS_LIMIT = 30;
 const RATE_DOWNLOAD_LIMIT = 60;
 const RATE_WINDOW_SEC = 60;
 
+function isAllowedOrigin(origin: string | null): boolean {
+  return Boolean(origin && ALLOWED_ORIGINS.includes(origin));
+}
+
+function rejectIfOriginNotAllowed(origin: string | null): Response | null {
+  if (!isAllowedOrigin(origin)) {
+    return json({ error: 'Origin não permitida.' }, 403, origin);
+  }
+  return null;
+}
+
 function corsHeaders(origin: string | null): HeadersInit {
-  const allowed = Boolean(origin && ALLOWED_ORIGINS.includes(origin));
+  const allowed = isAllowedOrigin(origin);
   const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -206,6 +217,13 @@ export default {
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    const browserPost =
+      request.method === 'POST' && url.pathname !== '/api/webhooks/mercadopago';
+    if (browserPost) {
+      const originRejected = rejectIfOriginNotAllowed(origin);
+      if (originRejected) return originRejected;
     }
 
     if (url.pathname === '/' && request.method === 'GET') {

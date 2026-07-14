@@ -1,0 +1,15 @@
+name = "frreinert-comments"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+
+# https://frreinert-comments.fabricio-reinert.workers.dev
+#
+# Namespace KV (criar uma vez):
+#   npx wrangler kv namespace create COMMENTS
+#   npx wrangler kv namespace create COMMENTS --preview
+# e colar os ids abaixo.
+
+[[kv_namespaces]]
+binding = "COMMENTS"
+id = "bec0389808ee446bbffd250eea7ba434"
+preview_id = "d8a59acee91144499719f0afb1704c51"

@@ -4,16 +4,13 @@ CMS web removido. Eventos (fotos à venda) e o catálogo da API usam só CLI. O 
 
 ## Eventos (fotos à venda)
 
-Caminho oficial: `npm run publish:evento` (alias de `ingest-photos`).
+Caminho oficial: `npm run publish:evento`.
 
 ```bash
 npm run publish:evento -- --dir ./inbox/casamento-ana-pedro \
   --title "Casamento Ana & Pedro" \
   --price 6 \
   --location "Porto Alegre, RS"
-
-# equivalente:
-# npm run ingest-photos -- --dir ./inbox/casamento-ana-pedro ...
 ```
 
 Uma pasta local = um evento (o nome da pasta vira o `eventId`).

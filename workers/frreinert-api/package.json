@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "sync-catalog": "node ../../scripts/sync-catalog.mjs",
+    "sync-catalog": "node ../../scripts/sync/catalog.mjs",
     "predeploy": "npm run sync-catalog",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",

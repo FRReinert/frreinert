@@ -33,7 +33,7 @@ pnpm-debug.log*
 # publish:post intermediate JPEGs (never commit)
 .publish-cache/
 
-# Heavy media — prefer npm run publish:post (R2 only). Legado: sync-media --prune
+# Heavy media — prefer npm run publish:post (R2 only)
 public/images/uploads/**
 !public/images/uploads/.gitkeep
 !public/images/uploads/placeholder.svg

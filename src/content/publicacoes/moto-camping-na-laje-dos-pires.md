@@ -1,6 +1,5 @@
 ---
 title: "Moto Camping na Laje dos Pires"
-path_slug: "moto-camping-na-laje-dos-pires"
 date: "2024-09-17T02:20:46.000-03:00"
 description: "Localizada em Rio Negrinho, Santa Catarina, a Laje dos Pires é um destino para passar o dia ou acampar que oferece uma experiência única para os amantes da natureza e aventureiros em busca de um refúgio distante da vida…"
 cover: "/images/uploads/thumb03.jpg"

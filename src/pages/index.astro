@@ -1,8 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
-import { assetUrl, withBase } from '../lib/paths';
-import { homeSchema } from '../lib/seo';
+import { assetUrl, withBase } from '../lib/media/paths';
+import { homeSchema } from '../lib/site/seo';
 
 const publicacoes = (await getCollection('publicacoes')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),

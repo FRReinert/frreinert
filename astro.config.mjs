@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 import tailwindcss from '@tailwindcss/vite';
-import { shouldExcludeFromSitemap } from './src/lib/seo.ts';
+import { shouldExcludeFromSitemap } from './src/lib/site/seo.ts';
 
 // https://astro.build/config
 export default defineConfig({

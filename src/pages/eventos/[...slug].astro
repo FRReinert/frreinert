@@ -1,11 +1,11 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import AddToCartButton from '../../components/AddToCartButton.astro';
-import ScreenshotGuard from '../../components/ScreenshotGuard.astro';
-import { assetUrl, withBase } from '../../lib/paths';
-import { eventSchema } from '../../lib/seo';
-import { formatBRL } from '../../lib/cart';
+import AddToCartButton from '../../components/commerce/AddToCartButton.astro';
+import ScreenshotGuard from '../../components/commerce/ScreenshotGuard.astro';
+import { assetUrl, withBase } from '../../lib/media/paths';
+import { eventSchema } from '../../lib/site/seo';
+import { formatBRL } from '../../lib/commerce/cart';
 
 export async function getStaticPaths() {
   const items = await getCollection('eventos');

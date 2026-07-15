@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { withBase } from '../lib/paths';
+import { withBase } from '../lib/media/paths';
 ---
 
 <Layout title="Seu pedido | Fabricio Roberto Reinert" description="Status do pedido" noindex>
@@ -47,9 +47,9 @@ import { withBase } from '../lib/paths';
 </Layout>
 
 <script>
-  import { clearCart, formatBRL, readLastOrder } from '../lib/cart';
-  import { CHECKOUT_API_BASE } from '../lib/mercadopago';
-  import { withBase } from '../lib/paths';
+  import { clearCart, formatBRL, readLastOrder } from '../lib/commerce/cart';
+  import { CHECKOUT_API_BASE } from '../lib/commerce/mercadopago';
+  import { withBase } from '../lib/media/paths';
 
   type PublicItem = {
     eventId: string;
@@ -99,12 +99,10 @@ import { withBase } from '../lib/paths';
       const res = await fetch(`${CHECKOUT_API_BASE}/api/orders?${query.toString()}`);
       if (res.ok) order = (await res.json()) as OrderResponse;
     } catch {
-      // snapshot local
     }
 
     const local = ref ? readLastOrder(ref) : null;
     const items = order?.items?.length ? order.items : local?.items || [];
-    // Só confia em "approved" vindo da API — URL status=success sozinho não libera download.
     const status = order?.status || (urlStatus === 'success' ? 'pending' : urlStatus || 'pending');
 
     const labels: Record<string, string> = {

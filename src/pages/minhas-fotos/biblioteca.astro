@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { withBase } from '../../lib/paths';
+import { withBase } from '../../lib/media/paths';
 ---
 
 <Layout
@@ -36,10 +36,10 @@ import { withBase } from '../../lib/paths';
 </Layout>
 
 <script>
-  import { formatBRL } from '../../lib/cart';
-  import { CHECKOUT_API_BASE } from '../../lib/mercadopago';
-  import { clearPhotosSession, readPhotosSession } from '../../lib/session';
-  import { assetUrl, withBase } from '../../lib/paths';
+  import { formatBRL } from '../../lib/commerce/cart';
+  import { CHECKOUT_API_BASE } from '../../lib/commerce/mercadopago';
+  import { clearPhotosSession, readPhotosSession } from '../../lib/commerce/session';
+  import { assetUrl, withBase } from '../../lib/media/paths';
 
   type PublicItem = {
     photoId: string;

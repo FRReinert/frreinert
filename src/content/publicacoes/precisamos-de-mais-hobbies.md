@@ -1,6 +1,5 @@
 ---
 title: "Precisamos voltar a ter hobbies"
-path_slug: "precisamos-voltar-a-ter-hobbies"
 date: "2026-07-14T10:49:00.000-03:00"
 description: "Chega de performance, precisamos voltar a ter prazer com nossas atividades"
 cover: "/images/uploads/IMG_1701.JPG"

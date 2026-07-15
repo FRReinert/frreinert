@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import { assetUrl, withBase } from '../../lib/paths';
+import { assetUrl, withBase } from '../../lib/media/paths';
 
 const publicacoes = (await getCollection('publicacoes')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
@@ -11,7 +11,6 @@ const publicacoes = (await getCollection('publicacoes')).sort(
 <Layout title="Publicações | Fabricio Roberto Reinert" description="Todas as publicações">
   <header class="mb-14 max-w-2xl">
     <h1 class="font-display text-4xl tracking-tight md:text-5xl">Publicações</h1>
-    <!-- <p class="mt-4 text-muted">Texto, fotografia e vídeo.</p> -->
   </header>
 
   {

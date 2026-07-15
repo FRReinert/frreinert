@@ -11,15 +11,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "sync-catalog": "node scripts/sync-catalog.mjs",
-    "ingest-photos": "node scripts/ingest-event-photos.mjs",
-    "publish:evento": "node scripts/ingest-event-photos.mjs",
+    "sync-catalog": "node scripts/sync/catalog.mjs",
+    "publish:evento": "node scripts/publish/evento.mjs",
     "optimize-images": "node scripts/optimize-blog-images.mjs",
-    "publish:post": "node scripts/publish-publicacao.mjs",
-    "notify:posts": "node scripts/notify-new-posts.mjs",
-    "migrate:penoestribo": "node scripts/migrate-penoestribo.mjs",
-    "sync-media": "node scripts/sync-media.mjs",
-    "sync-media:prune": "node scripts/sync-media.mjs --prune"
+    "publish:post": "node scripts/publish/post.mjs",
+    "notify:posts": "node scripts/notify/posts.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",
@@ -29,9 +25,5 @@
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.2",
     "yaml": "^2.9.0"
-  },
-  "devDependencies": {
-    "node-html-parser": "^9.0.0",
-    "turndown": "^7.2.4"
   }
 }

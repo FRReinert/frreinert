@@ -1,6 +1,5 @@
 ---
 title: São João de Timbó 2026
-path_slug: sao-joao-timbo-2026
 date: 2026-06-26T19:00:00.000-03:00
 description: Uma festa tradicional, mas não da maneira que estamos
   acostumados... E isso é bom!

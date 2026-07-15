@@ -1,12 +1,12 @@
 ---
 import '../styles/global.css';
-import { FEED, feedUrl } from '../lib/feed';
-import { withBase } from '../lib/paths';
-import type { JsonLd, SeoType } from '../lib/seo';
-import CartBadge from '../components/CartBadge.astro';
-import OneSignalBootstrap from '../components/OneSignalBootstrap.astro';
-import SeoHead from '../components/SeoHead.astro';
-import SiteFooter from '../components/SiteFooter.astro';
+import { FEED, feedUrl } from '../lib/content/feed';
+import { withBase } from '../lib/media/paths';
+import type { JsonLd, SeoType } from '../lib/site/seo';
+import CartBadge from '../components/commerce/CartBadge.astro';
+import OneSignalBootstrap from '../components/site/OneSignalBootstrap.astro';
+import SeoHead from '../components/site/SeoHead.astro';
+import SiteFooter from '../components/site/SiteFooter.astro';
 
 interface Props {
   title?: string;
@@ -47,7 +47,6 @@ const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
       noindex={noindex}
       jsonLd={jsonLd}
     />
-    {/* Necessário para Web Push no iOS (Add to Home Screen → standalone). */}
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Reinert" />
     <meta name="mobile-web-app-capable" content="yes" />

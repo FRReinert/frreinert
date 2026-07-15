@@ -2,7 +2,7 @@
 
 Notificações no navegador quando sai uma **nova** publicação. O feed RSS em `/rss.xml` continua para leitores; o push é separado.
 
-Setup oficial: [Web SDK setup](https://documentation.onesignal.com/docs/en/web-sdk-setup) · App ID em `src/lib/push.ts`.
+Setup oficial: [Web SDK setup](https://documentation.onesignal.com/docs/en/web-sdk-setup) · App ID em `src/lib/site/push.ts`.
 
 ## Visão rápida
 

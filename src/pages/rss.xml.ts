@@ -1,7 +1,7 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
-import { FEED, feedUrl, publicationLink } from '../lib/feed';
-import { assetUrl } from '../lib/paths';
+import { FEED, feedUrl, publicationLink } from '../lib/content/feed';
+import { assetUrl } from '../lib/media/paths';
 import type { APIContext } from 'astro';
 
 export async function GET(context: APIContext) {
@@ -35,7 +35,6 @@ export async function GET(context: APIContext) {
         description: post.data.description,
         pubDate: post.data.date,
         link: publicationLink(post.id),
-        // Capa como enclosure + media:content — útil para leitores e RSS-to-push.
         enclosure: {
           url: cover,
           type: coverGuessType(cover),

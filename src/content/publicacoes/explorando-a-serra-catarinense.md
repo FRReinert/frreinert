@@ -1,6 +1,5 @@
 ---
 title: "Explorando a Serra Catarinense"
-path_slug: "explorando-a-serra-catarinense"
 date: "2025-02-16T18:32:55.000-03:00"
 description: "Nesta publicação, compartilho um dos roteiros mais incríveis que já fizemos sobre duas rodas: um circuíto saindo de Timbó, no Vale do Itajaí, até os campos da Serra Catarinense, com muito offroad e paisagens de tirar o…"
 cover: "/images/uploads/thumb_roteiro_serra_catarinense_02.jpg"

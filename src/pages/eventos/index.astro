@@ -1,8 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import ScreenshotGuard from '../../components/ScreenshotGuard.astro';
-import { assetUrl, withBase } from '../../lib/paths';
+import ScreenshotGuard from '../../components/commerce/ScreenshotGuard.astro';
+import { assetUrl, withBase } from '../../lib/media/paths';
 
 const eventos = (await getCollection('eventos')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),

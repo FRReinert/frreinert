@@ -22,7 +22,7 @@ https://cdn.frreinert.com.br
 (mesmo valor em `.env.example` e no workflow de deploy)
 
 **Feed RSS (leitores / Chrome Follow):** `https://frreinert.com.br/rss.xml`  
-Metadados em `src/lib/feed.ts`. Cada `publish:post` + deploy regenera o feed automaticamente.
+Metadados em `src/lib/content/feed.ts`. Cada `publish:post` + deploy regenera o feed automaticamente.
 
 **Web Push (notificação no navegador):** OneSignal + Action no deploy — ver [PUSH.md](./PUSH.md). Um `.md` **novo** em `publicacoes/` dispara o aviso aos inscritos.
 
@@ -65,14 +65,14 @@ O script:
 4. Escreve `src/content/publicacoes/<slug>.md`
 5. Imprime path do `.md` e URLs de smoke-test
 
-**Não** adiciona JPG/MP3 ao Git. Não use `sync-media:prune` neste fluxo.
+**Não** adiciona JPG/MP3 ao Git.
 
 ### Flags
 
 | Flag | Obrigatório | Default | Descrição |
 | --- | --- | --- | --- |
 | `--dir <path>` | sim | — | Pasta com fotos originais |
-| `--slug <slug>` | sim | — | Só `a-z`, `0-9`, hífen; vira `path_slug` e nome do `.md` |
+| `--slug <slug>` | sim | — | Só `a-z`, `0-9`, hífen; vira nome do `.md` |
 | `--title <text>` | sim* | — | Título (*omitível com `--update` se o `.md` já existe) |
 | `--description <text>` | sim* | — | Descrição curta |
 | `--date <ISO ou YYYY-MM-DD>` | não | agora (−03:00) | Data da publicação |
@@ -101,7 +101,6 @@ ffmpeg -i entrada.qualquer -vn -codec:a libmp3lame -qscale:a 2 ./faixa.mp3
 ```yaml
 ---
 title: "..."
-path_slug: meu-slug
 date: 2026-06-26T19:00:00.000-03:00
 description: "..."
 cover: /images/uploads/capa.jpg
@@ -176,7 +175,7 @@ curl -sD - -o /dev/null "https://cdn.frreinert.com.br/audio/seu-arquivo.mp3"
 
 - Não usar CMS web / `/admin/` (removido)
 - Não commitar pastas de JPG/MP3 “para o site funcionar”
-- Não confundir com **eventos** (`publish:evento` / `ingest-photos` + R2 privado) — [COMMERCE.md](./COMMERCE.md)
+- Não confundir com **eventos** (`publish:evento` + R2 privado) — [COMMERCE.md](./COMMERCE.md)
 - Não apontar `PUBLIC_MEDIA_BASE` para o Worker antigo `*.workers.dev` de mídia
 
 ---

@@ -1,6 +1,5 @@
 ---
 title: "Roteiro Rural no Vale Europeu"
-path_slug: "roteiro-rural-no-vale-europeu"
 date: "2024-09-29T23:37:31.000-03:00"
 description: "Explorar o Vale Europeu de moto é uma das melhores maneiras de vivenciar a cultura e as belezas naturais dessa região encantadora."
 cover: "/images/uploads/thumb04.jpg"

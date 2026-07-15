@@ -1,13 +1,13 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import PublicationMedia from '../../components/PublicationMedia.astro';
-import PublicationAudio from '../../components/PublicationAudio.astro';
-import PublicationShare from '../../components/PublicationShare.astro';
-import PostComments from '../../components/PostComments.astro';
-import { assetUrl, withBase } from '../../lib/paths';
-import { blogPostingSchema } from '../../lib/seo';
-import { parseSpotifyUrl } from '../../lib/spotify';
+import PublicationMedia from '../../components/publications/PublicationMedia.astro';
+import PublicationAudio from '../../components/publications/PublicationAudio.astro';
+import PublicationShare from '../../components/publications/PublicationShare.astro';
+import PostComments from '../../components/publications/PostComments.astro';
+import { assetUrl, withBase } from '../../lib/media/paths';
+import { blogPostingSchema } from '../../lib/site/seo';
+import { parseSpotifyUrl } from '../../lib/media/spotify';
 
 export async function getStaticPaths() {
   const items = await getCollection('publicacoes');

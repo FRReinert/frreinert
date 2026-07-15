@@ -1,6 +1,5 @@
 ---
 title: "Explorando o Desconhecido: Estrada da Borboleta em Dr. Pedrinho, Santa Catarina"
-path_slug: "explorando-o-desconhecido-estrada-da-borboleta-em-dr-pedrinho-santa-catarina"
 date: "2024-10-28T04:32:34.000-03:00"
 description: "Quando falamos de moto turismo, o encanto não está apenas em seguir as rotas mais populares ou com melhor infraestrutura."
 cover: "/images/uploads/thumb05.jpg"

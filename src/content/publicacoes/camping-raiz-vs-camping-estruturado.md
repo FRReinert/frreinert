@@ -1,6 +1,5 @@
 ---
 title: "Camping Raiz vs. Camping Estruturado: Qual é Melhor para Motociclistas?"
-path_slug: "camping-raiz-vs-camping-estruturado"
 date: "2024-10-07T18:45:30.000-03:00"
 description: "Quando planejamos acampar durante uma viagem de moto, surge a dúvida: Camping Raiz vs. Camping Estruturado."
 cover: "/images/uploads/thumb_camping.jpg"

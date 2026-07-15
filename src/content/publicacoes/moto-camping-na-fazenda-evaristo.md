@@ -1,6 +1,5 @@
 ---
 title: "Moto Camping na Fazenda Evaristo"
-path_slug: "moto-camping-na-fazenda-evaristo"
 date: "2024-09-17T02:20:58.000-03:00"
 description: "A Fazenda Evaristo, localizada em Rio Negrinho, é um destino encantador para quem busca um contato mais próximo com a natureza, repleto de atividades e experiências inesquecíveis."
 cover: "/images/uploads/thumb02.jpg"

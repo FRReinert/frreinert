@@ -1,0 +1,51 @@
+---
+import {
+  SITE_NAME,
+  absoluteImageUrl,
+  canonicalUrl,
+  type JsonLd,
+  type SeoType,
+} from '../../lib/site/seo';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  type?: SeoType;
+  noindex?: boolean;
+  jsonLd?: JsonLd;
+}
+
+const { title, description, image, type = 'website', noindex = false, jsonLd } = Astro.props;
+
+const canonical = Astro.site ? canonicalUrl(Astro.site, Astro.url.pathname) : undefined;
+const ogImage = Astro.site ? absoluteImageUrl(Astro.site, image) : image;
+const jsonLdBlocks = jsonLd
+  ? Array.isArray(jsonLd)
+    ? jsonLd
+    : [jsonLd]
+  : [];
+---
+
+{canonical && <link rel="canonical" href={canonical} />}
+
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={type} />
+<meta property="og:locale" content="pt_BR" />
+<meta property="og:site_name" content={SITE_NAME} />
+{canonical && <meta property="og:url" content={canonical} />}
+{ogImage && <meta property="og:image" content={ogImage} />}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+{
+  jsonLdBlocks.map((block) => (
+    <script type="application/ld+json" set:html={JSON.stringify(block)} />
+  ))
+}

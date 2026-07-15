@@ -1,6 +1,6 @@
 /**
  * Shared image optimization helpers (JPEG web, no watermark).
- * Used by optimize-blog-images.mjs and publish-publicacao.mjs.
+ * Used by optimize-blog-images.mjs and scripts/publish/post.mjs.
  */
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,6 +1,5 @@
 ---
 title: "Aventura na Estrada do Palmito"
-path_slug: "aventura-entrada-do-palmito"
 date: "2024-09-17T02:19:41.000-03:00"
 description: "A Estrada do Palmito, que conecta Doutor Pedrinho a Rio dos Cedros, em Santa Catarina, é um verdadeiro paraíso para os amantes de aventuras off-road."
 cover: "/images/uploads/thumb01.jpg"

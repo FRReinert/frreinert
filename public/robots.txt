@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /carrinho/
+Disallow: /checkout/
+Disallow: /pedido/
+Disallow: /minhas-fotos/
+
+Sitemap: https://frreinert.com.br/sitemap-index.xml

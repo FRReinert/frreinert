@@ -6,6 +6,7 @@ import PublicationAudio from '../../components/PublicationAudio.astro';
 import PublicationShare from '../../components/PublicationShare.astro';
 import PostComments from '../../components/PostComments.astro';
 import { assetUrl, withBase } from '../../lib/paths';
+import { blogPostingSchema } from '../../lib/seo';
 import { parseSpotifyUrl } from '../../lib/spotify';
 
 export async function getStaticPaths() {
@@ -22,9 +23,17 @@ const hasAudio = Boolean(
   item.data.audio_file?.trim() || parseSpotifyUrl(item.data.spotify_url),
 );
 const shareUrl = new URL(Astro.url.pathname, Astro.site).href;
+const coverImage = assetUrl(item.data.cover);
+const jsonLd = Astro.site ? blogPostingSchema(item, Astro.site, coverImage) : undefined;
 ---
 
-<Layout title={`${item.data.title} | Fabricio Roberto Reinert`} description={item.data.description}>
+<Layout
+  title={`${item.data.title} | Fabricio Roberto Reinert`}
+  description={item.data.description}
+  image={coverImage}
+  type="article"
+  jsonLd={jsonLd}
+>
   <article class:list={[hasAudio && 'pb-28']}>
     <p class="mb-8 text-xs uppercase tracking-[0.2em] text-muted">
       <a href={withBase('publicacoes/')} class="transition hover:text-ink">← Publicações</a>

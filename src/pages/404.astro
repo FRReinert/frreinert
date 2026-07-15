@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { withBase } from '../lib/paths';
+---
+
+<Layout
+  title="Página não encontrada | Fabricio Roberto Reinert"
+  description="A página que você procura não existe ou foi movida."
+  noindex
+>
+  <header class="mb-10 max-w-2xl">
+    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Página não encontrada</h1>
+    <p class="mt-4 text-muted">
+      O endereço pode estar incorreto ou o conteúdo foi removido.
+    </p>
+  </header>
+
+  <div class="flex flex-wrap gap-4">
+    <a
+      href={withBase()}
+      class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
+    >
+      Início
+    </a>
+    <a
+      href={withBase('publicacoes/')}
+      class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
+    >
+      Publicações
+    </a>
+    <a
+      href={withBase('eventos/')}
+      class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
+    >
+      Eventos
+    </a>
+  </div>
+</Layout>

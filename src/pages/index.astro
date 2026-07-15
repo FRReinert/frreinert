@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import { assetUrl, withBase } from '../lib/paths';
+import { homeSchema } from '../lib/seo';
 
 const publicacoes = (await getCollection('publicacoes')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
@@ -10,9 +11,10 @@ const publicacoes = (await getCollection('publicacoes')).sort(
 const recent = publicacoes.slice(0, 6);
 const intro =
   'Página pessoal — sem algoritmo, sem viralizar, sem obsessão por métricas. Aqui conto histórias com fotografia, filmagem amadora e humor duvidoso.';
+const jsonLd = Astro.site ? homeSchema(Astro.site, intro) : undefined;
 ---
 
-<Layout title="Fabricio Roberto Reinert" description={intro}>
+<Layout title="Fabricio Roberto Reinert" description={intro} jsonLd={jsonLd}>
   <header class="mb-14 max-w-2xl">
     <h1 class="sr-only">Fabricio Roberto Reinert</h1>
     <p class="text-base leading-relaxed text-muted md:text-lg">{intro}</p>

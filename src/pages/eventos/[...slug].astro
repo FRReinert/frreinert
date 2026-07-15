@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import AddToCartButton from '../../components/AddToCartButton.astro';
 import ScreenshotGuard from '../../components/ScreenshotGuard.astro';
 import { assetUrl, withBase } from '../../lib/paths';
+import { eventSchema } from '../../lib/seo';
 import { formatBRL } from '../../lib/cart';
 
 export async function getStaticPaths() {
@@ -16,9 +17,17 @@ export async function getStaticPaths() {
 
 const { item } = Astro.props;
 const { Content } = await render(item);
+const coverImage = assetUrl(item.data.cover);
+const jsonLd = Astro.site ? eventSchema(item, Astro.site, coverImage) : undefined;
 ---
 
-<Layout title={`${item.data.title} | Eventos`} description={item.data.description}>
+<Layout
+  title={`${item.data.title} | Eventos`}
+  description={item.data.description}
+  image={coverImage}
+  type="article"
+  jsonLd={jsonLd}
+>
   <article>
     <p class="mb-8 text-xs uppercase tracking-[0.2em] text-muted">
       <a href={withBase('eventos/')} class="transition hover:text-ink">← Eventos</a>

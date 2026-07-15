@@ -2,18 +2,28 @@
 import '../styles/global.css';
 import { FEED, feedUrl } from '../lib/feed';
 import { withBase } from '../lib/paths';
+import type { JsonLd, SeoType } from '../lib/seo';
 import CartBadge from '../components/CartBadge.astro';
 import OneSignalBootstrap from '../components/OneSignalBootstrap.astro';
+import SeoHead from '../components/SeoHead.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 
 interface Props {
   title?: string;
   description?: string;
+  image?: string;
+  type?: SeoType;
+  noindex?: boolean;
+  jsonLd?: JsonLd;
 }
 
 const {
   title = 'Fabricio Roberto Reinert',
   description = 'Página pessoal — sem algoritmo, sem viralizar, sem obsessão por métricas. Aqui conto histórias com fotografia, filmagem amadora e humor duvidoso.',
+  image,
+  type,
+  noindex,
+  jsonLd,
 } = Astro.props;
 
 const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
@@ -29,6 +39,14 @@ const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    <SeoHead
+      title={title}
+      description={description}
+      image={image}
+      type={type}
+      noindex={noindex}
+      jsonLd={jsonLd}
+    />
     {/* Necessário para Web Push no iOS (Add to Home Screen → standalone). */}
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Reinert" />

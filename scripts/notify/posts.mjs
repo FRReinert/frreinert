@@ -59,8 +59,8 @@ async function sendPush({ title, description, url, image }) {
     included_segments: [SEGMENT],
     headings: { en: title, pt: title },
     contents: {
-      en: description || 'Nova publicação no fotolog.',
-      pt: description || 'Nova publicação no fotolog.',
+      en: description || 'Fabrício fez uma nova publicação.',
+      pt: description || 'Fabrício fez uma nova publicação.',
     },
     url,
     web_url: url,

@@ -40,21 +40,26 @@ const jsonLd = Astro.site ? momentSchema(item, Astro.site, imageUrl, title, desc
   <ProfileShell active="moments">
     <article>
       <SectionBackLink href={SECTION_META.moments.href} label={SECTION_META.moments.backLabel} />
+
+      <header class="mb-10 max-w-3xl">
+        <h1 class="font-display text-4xl tracking-tight md:text-5xl">{title}</h1>
+        <time
+          class="mt-3 block text-[0.65rem] uppercase tracking-[0.2em] text-muted"
+          datetime={item.data.date.toISOString()}
+        >
+          {item.data.date.toLocaleDateString('pt-BR')}
+        </time>
+      </header>
+
       <figure class="mb-10">
-      <img src={imageUrl} alt={title} class="max-h-[75vh] w-full object-cover" />
-    </figure>
+        <img
+          src={imageUrl}
+          alt={title}
+          class="mx-auto block max-h-[75vh] w-full object-contain"
+        />
+      </figure>
 
-    <header class="mb-10 max-w-3xl">
-      <time
-        class="text-[0.65rem] uppercase tracking-[0.2em] text-muted"
-        datetime={item.data.date.toISOString()}
-      >
-        {item.data.date.toLocaleDateString('pt-BR')}
-      </time>
-      <h1 class="mt-3 font-display text-4xl tracking-tight md:text-5xl">{title}</h1>
-    </header>
-
-    <ContentShare title={title} url={shareUrl} />
+      <ContentShare title={title} url={shareUrl} />
 
     <div class="max-w-prose">
       <p class="whitespace-pre-wrap text-base leading-relaxed text-ink-soft md:text-lg">

@@ -9,20 +9,26 @@ import {
   momentCommentSlug,
   momentDescription,
   momentTitle,
+  sortMomentsByDateDesc,
 } from '../../lib/content/moments';
 import { assetUrl } from '../../lib/media/paths';
 import { SECTION_META } from '../../lib/site/sections';
 import { momentSchema } from '../../lib/site/seo';
+import MomentNav from '../../components/profile/MomentNav.astro';
 
 export async function getStaticPaths() {
-  const items = await getCollection('moments');
-  return items.map((item) => ({
+  const sorted = sortMomentsByDateDesc(await getCollection('moments'));
+  return sorted.map((item, index) => ({
     params: { slug: item.id },
-    props: { item },
+    props: {
+      item,
+      older: sorted[index + 1] ?? null,
+      newer: sorted[index - 1] ?? null,
+    },
   }));
 }
 
-const { item } = Astro.props;
+const { item, older, newer } = Astro.props;
 const title = momentTitle(item);
 const description = momentDescription(item);
 const shareUrl = new URL(Astro.url.pathname, Astro.site).href;
@@ -37,9 +43,9 @@ const jsonLd = Astro.site ? momentSchema(item, Astro.site, imageUrl, title, desc
   type="article"
   jsonLd={jsonLd}
 >
-  <ProfileShell active="moments">
+  <ProfileShell active="inicio">
     <article>
-      <SectionBackLink href={SECTION_META.moments.href} label={SECTION_META.moments.backLabel} />
+      <SectionBackLink href={SECTION_META.inicio.href} label="Início" />
 
       <header class="mb-10 max-w-3xl">
         <h1 class="font-display text-4xl tracking-tight md:text-5xl">{title}</h1>
@@ -66,6 +72,8 @@ const jsonLd = Astro.site ? momentSchema(item, Astro.site, imageUrl, title, desc
         {item.data.text}
       </p>
     </div>
+
+    <MomentNav older={older} newer={newer} />
 
     <PostComments slug={momentCommentSlug(item.id)} />
     </article>

@@ -11,7 +11,7 @@ export const SECTION_META: Record<
     href: withBase('publicacoes/'),
     backLabel: 'Publicações',
   },
-  moments: { title: 'Moments', href: withBase('moments/'), backLabel: 'Moments' },
+  moments: { title: 'Momentos', href: withBase('moments/'), backLabel: 'Início' },
   eventos: { title: 'Eventos', href: withBase('eventos/'), backLabel: 'Eventos' },
   'area-cliente': {
     title: 'Área do cliente',

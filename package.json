@@ -16,7 +16,8 @@
     "optimize-images": "node scripts/optimize-blog-images.mjs",
     "publish:post": "node scripts/publish/post.mjs",
     "publish:moment": "node scripts/publish/moment.mjs",
-    "notify:posts": "node scripts/notify/posts.mjs"
+    "notify:posts": "node scripts/notify/posts.mjs",
+    "setup:agents": "node scripts/setup/agents.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",

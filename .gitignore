@@ -42,3 +42,8 @@ public/audio/**
 
 # Penoestribo migration staging
 .migrate-cache/
+
+# Cursor / agent dev (local — bootstrap: npm run setup:agents)
+.cursor/
+AGENTS.md
+.cursorignore

@@ -67,7 +67,7 @@ function momentTitle(data) {
   const firstLine = String(data.text || '')
     .split('\n')[0]
     ?.trim();
-  if (!firstLine) return 'Moment';
+  if (!firstLine) return 'Momento';
 
   return firstLine.length > TITLE_MAX
     ? `${firstLine.slice(0, TITLE_MAX - 1).trim()}…`

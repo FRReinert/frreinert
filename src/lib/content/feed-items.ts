@@ -17,7 +17,7 @@ export type FeedItem = {
 const KIND_BADGE: Record<FeedItemKind, string> = {
   publicacao: 'Publicação',
   evento: 'Evento',
-  moment: 'Moment',
+  moment: 'Momento',
 };
 
 function sortByDateDesc(a: FeedItem, b: FeedItem): number {

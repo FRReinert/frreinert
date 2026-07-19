@@ -1,21 +1,5 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import ProfileShell from '../../components/profile/ProfileShell.astro';
-import ContentGrid from '../../components/profile/ContentGrid.astro';
-import { getFeedItemsByKind } from '../../lib/content/feed-items';
-import { SECTION_META } from '../../lib/site/sections';
+import { withBase } from '../../lib/media/paths';
 
-const items = await getFeedItemsByKind('moment');
+return Astro.redirect(withBase());
 ---
-
-<Layout title="Moments | Fabricio Roberto Reinert" description="Momentos em foto e texto">
-  <ProfileShell active="moments" heading={SECTION_META.moments.title}>
-    {
-      items.length === 0 ? (
-        <p class="text-sm text-muted">Ainda não há nenhum moment.</p>
-      ) : (
-        <ContentGrid items={items} showTitles />
-      )
-    }
-  </ProfileShell>
-</Layout>

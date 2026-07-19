@@ -1,0 +1,52 @@
+---
+import { momentTitle, type MomentEntry } from '../../lib/content/moments';
+import { withBase } from '../../lib/media/paths';
+
+interface Props {
+  older: MomentEntry | null;
+  newer: MomentEntry | null;
+}
+
+const { older, newer } = Astro.props;
+
+const linkClass =
+  'group max-w-[min(100%,18rem)] transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/40';
+const labelClass = 'text-[0.65rem] uppercase tracking-[0.12em] text-muted';
+const titleClass =
+  'mt-1 block font-display text-base leading-snug tracking-tight text-ink-soft group-hover:text-ink md:text-lg';
+---
+
+{
+  (older || newer) && (
+    <nav
+      class="mt-12 border-t border-line pt-8"
+      aria-label="Navegação entre momentos"
+    >
+      <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        {
+          older ? (
+            <a href={withBase(`moments/${older.id}/`)} class={linkClass}>
+              <span class={labelClass}>← Anterior</span>
+              <span class={titleClass}>{momentTitle(older)}</span>
+            </a>
+          ) : (
+            <span class="hidden sm:block sm:flex-1" aria-hidden="true" />
+          )
+        }
+        {
+          newer ? (
+            <a
+              href={withBase(`moments/${newer.id}/`)}
+              class:list={[linkClass, 'sm:text-right']}
+            >
+              <span class={labelClass}>Próximo →</span>
+              <span class={titleClass}>{momentTitle(newer)}</span>
+            </a>
+          ) : (
+            <span class="hidden sm:block sm:flex-1" aria-hidden="true" />
+          )
+        }
+      </div>
+    </nav>
+  )
+}

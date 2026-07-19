@@ -2,17 +2,30 @@
 import Layout from '../layouts/Layout.astro';
 import ProfileShell from '../components/profile/ProfileShell.astro';
 import ContentGrid from '../components/profile/ContentGrid.astro';
+import MomentsCarousel from '../components/profile/MomentsCarousel.astro';
 import { getAllFeedItems } from '../lib/content/feed-items';
 import { PROFILE_BIO } from '../lib/site/profile';
 import { SECTION_META } from '../lib/site/sections';
 import { homeSchema } from '../lib/site/seo';
 
-const items = await getAllFeedItems();
+const allItems = await getAllFeedItems();
+const momentItems = allItems.filter((item) => item.kind === 'moment');
+const recentItems = allItems.filter((item) => item.kind !== 'moment');
 const jsonLd = Astro.site ? homeSchema(Astro.site, PROFILE_BIO) : undefined;
 ---
 
 <Layout title="Fabricio Roberto Reinert" description={PROFILE_BIO} jsonLd={jsonLd}>
-  <ProfileShell active="inicio" heading={SECTION_META.inicio.title}>
-    <ContentGrid items={items} showBadges showTitles />
+  <ProfileShell active="inicio">
+    <MomentsCarousel items={momentItems} />
+
+    <section aria-labelledby="recentes-heading">
+      <h2
+        id="recentes-heading"
+        class="mb-4 font-display text-2xl tracking-tight text-ink md:text-3xl"
+      >
+        {SECTION_META.inicio.title}
+      </h2>
+      <ContentGrid items={recentItems} showBadges showTitles />
+    </section>
   </ProfileShell>
 </Layout>

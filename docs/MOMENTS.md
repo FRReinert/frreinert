@@ -17,6 +17,8 @@ Um Moment é **1 imagem + texto plano** — sem negrito, itálico ou markdown. E
 
 Comentários e compartilhamento funcionam como nas publicações. O slug de comentários no KV é `moment-<slug>` (ex.: `moment-por-do-sol`).
 
+**Web Push:** um `.md` **novo** em `moments/` dispara notificação no deploy — ver [PUSH.md](./PUSH.md). Edições (`--update`) não reenviam.
+
 ---
 
 ## Pré-requisitos

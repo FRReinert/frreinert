@@ -1,6 +1,6 @@
 # Web Push (OneSignal)
 
-Notificações no navegador quando sai uma **nova** publicação. O feed RSS em `/rss.xml` continua para leitores; o push é separado.
+Notificações no navegador quando sai uma **nova** publicação ou moment. O feed RSS em `/rss.xml` continua para leitores; o push é separado.
 
 Setup oficial: [Web SDK setup](https://documentation.onesignal.com/docs/en/web-sdk-setup) · App ID em `src/lib/site/push.ts`.
 
@@ -10,7 +10,7 @@ Setup oficial: [Web SDK setup](https://documentation.onesignal.com/docs/en/web-s
 Visitante clica “Ativar notificações” no rodapé
   → OneSignal grava a inscrição
 
-Você: npm run publish:post → push do .md novo → deploy Pages
+Você: npm run publish:post ou publish:moment → push do .md novo → deploy Pages
   → Action `notify` chama a API OneSignal → push nos inscritos
 ```
 
@@ -39,7 +39,7 @@ Você: npm run publish:post → push do .md novo → deploy Pages
 
 ## Quando o push dispara
 
-Só quando o commit em `main` **adiciona** um `.md` em `src/content/publicacoes/`.
+Só quando o commit em `main` **adiciona** um `.md` novo em `src/content/publicacoes/` ou `src/content/moments/`.
 
 ## iPhone / iPad (iOS 16.4+)
 

@@ -1,0 +1,68 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import ProfileShell from '../../components/profile/ProfileShell.astro';
+import SectionBackLink from '../../components/profile/SectionBackLink.astro';
+import ContentShare from '../../components/site/ContentShare.astro';
+import PostComments from '../../components/publications/PostComments.astro';
+import {
+  momentCommentSlug,
+  momentDescription,
+  momentTitle,
+} from '../../lib/content/moments';
+import { assetUrl } from '../../lib/media/paths';
+import { SECTION_META } from '../../lib/site/sections';
+import { momentSchema } from '../../lib/site/seo';
+
+export async function getStaticPaths() {
+  const items = await getCollection('moments');
+  return items.map((item) => ({
+    params: { slug: item.id },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+const title = momentTitle(item);
+const description = momentDescription(item);
+const shareUrl = new URL(Astro.url.pathname, Astro.site).href;
+const imageUrl = assetUrl(item.data.image);
+const jsonLd = Astro.site ? momentSchema(item, Astro.site, imageUrl, title, description) : undefined;
+---
+
+<Layout
+  title={`${title} | Fabricio Roberto Reinert`}
+  description={description}
+  image={imageUrl}
+  type="article"
+  jsonLd={jsonLd}
+>
+  <ProfileShell active="moments">
+    <article>
+      <SectionBackLink href={SECTION_META.moments.href} label={SECTION_META.moments.backLabel} />
+      <figure class="mb-10">
+      <img src={imageUrl} alt={title} class="max-h-[75vh] w-full object-cover" />
+    </figure>
+
+    <header class="mb-10 max-w-3xl">
+      <time
+        class="text-[0.65rem] uppercase tracking-[0.2em] text-muted"
+        datetime={item.data.date.toISOString()}
+      >
+        {item.data.date.toLocaleDateString('pt-BR')}
+      </time>
+      <h1 class="mt-3 font-display text-4xl tracking-tight md:text-5xl">{title}</h1>
+    </header>
+
+    <ContentShare title={title} url={shareUrl} />
+
+    <div class="max-w-prose">
+      <p class="whitespace-pre-wrap text-base leading-relaxed text-ink-soft md:text-lg">
+        {item.data.text}
+      </p>
+    </div>
+
+    <PostComments slug={momentCommentSlug(item.id)} />
+    </article>
+  </ProfileShell>
+</Layout>

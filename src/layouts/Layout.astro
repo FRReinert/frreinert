@@ -3,7 +3,6 @@ import '../styles/global.css';
 import { FEED, feedUrl } from '../lib/content/feed';
 import { withBase } from '../lib/media/paths';
 import type { JsonLd, SeoType } from '../lib/site/seo';
-import CartBadge from '../components/commerce/CartBadge.astro';
 import OneSignalBootstrap from '../components/site/OneSignalBootstrap.astro';
 import SeoHead from '../components/site/SeoHead.astro';
 import SiteFooter from '../components/site/SiteFooter.astro';
@@ -67,41 +66,7 @@ const rssHref = Astro.site ? feedUrl(Astro.site) : withBase(FEED.path);
     <title>{title}</title>
   </head>
   <body class="flex min-h-screen flex-col bg-paper text-ink">
-    <header class="relative z-50 w-full border-b border-line bg-paper">
-      <nav
-        class="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between md:gap-8 md:px-8 md:py-6"
-      >
-        <a
-          href={withBase()}
-          class="shrink-0 font-display text-2xl tracking-[-0.01em] text-ink md:text-3xl"
-        >
-          Fabricio Reinert
-        </a>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 md:gap-6">
-          <a
-            href={withBase('publicacoes/')}
-            class="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-muted transition hover:text-ink md:text-xs md:tracking-[0.12em]"
-          >
-            Publicações
-          </a>
-          <a
-            href={withBase('eventos/')}
-            class="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-muted transition hover:text-ink md:text-xs md:tracking-[0.12em]"
-          >
-            Eventos
-          </a>
-          <a
-            href={withBase('minhas-fotos/')}
-            class="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-muted transition hover:text-ink md:text-xs md:tracking-[0.12em]"
-          >
-            Minhas fotos
-          </a>
-          <CartBadge />
-        </div>
-      </nav>
-    </header>
-
-    <main class="mx-auto w-full max-w-6xl flex-1 px-5 py-12 md:px-8 md:py-16">
+    <main class="mx-auto w-full max-w-6xl flex-1 px-5 py-8 md:px-8 md:py-12">
       <slot />
     </main>
 

@@ -15,6 +15,7 @@
     "publish:evento": "node scripts/publish/evento.mjs",
     "optimize-images": "node scripts/optimize-blog-images.mjs",
     "publish:post": "node scripts/publish/post.mjs",
+    "publish:moment": "node scripts/publish/moment.mjs",
     "notify:posts": "node scripts/notify/posts.mjs"
   },
   "dependencies": {

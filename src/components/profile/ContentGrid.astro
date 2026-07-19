@@ -1,0 +1,45 @@
+---
+import type { FeedItem } from '../../lib/content/feed-items';
+import { assetUrl } from '../../lib/media/paths';
+
+interface Props {
+  items: FeedItem[];
+  showBadges?: boolean;
+  showTitles?: boolean;
+}
+
+const { items, showBadges = false, showTitles = false } = Astro.props;
+---
+
+{
+  items.length === 0 ? (
+    <p class="text-sm text-muted">Nenhum conteúdo ainda.</p>
+  ) : (
+    <ul class="m-0 grid list-none grid-cols-3 gap-1 p-0">
+      {items.map((item) => (
+        <li>
+          <a href={item.href} class="group relative block overflow-hidden bg-paper-tint">
+            <img
+              src={assetUrl(item.cover)}
+              alt={item.title}
+              class="aspect-square w-full object-cover transition duration-300 group-hover:opacity-90"
+              loading="lazy"
+            />
+            {showBadges && item.badge ? (
+              <span class="absolute left-1 top-1 rounded bg-paper/90 px-1.5 py-0.5 text-[0.55rem] font-medium uppercase tracking-[0.08em] text-ink-soft backdrop-blur-sm">
+                {item.badge}
+              </span>
+            ) : null}
+            {showTitles ? (
+              <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 via-ink/45 to-transparent px-1.5 pb-1.5 pt-8">
+                <span class="line-clamp-2 text-[0.6rem] leading-snug text-paper md:text-[0.65rem]">
+                  {item.title}
+                </span>
+              </span>
+            ) : null}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}

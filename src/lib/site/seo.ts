@@ -80,6 +80,40 @@ export function eventSchema(
   };
 }
 
+export function momentSchema(
+  item: CollectionEntry<'moments'>,
+  site: URL | string,
+  image: string | undefined,
+  title: string,
+  description: string,
+): JsonLd {
+  const url = canonicalUrl(site, `/moments/${item.id}/`);
+  const imageUrl = absoluteImageUrl(site, image);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SocialMediaPosting',
+    headline: title,
+    description,
+    datePublished: item.data.date.toISOString(),
+    url,
+    ...(imageUrl && { image: imageUrl }),
+    author: {
+      '@type': 'Person',
+      name: AUTHOR.name,
+      url: AUTHOR.url,
+    },
+    publisher: {
+      '@type': 'Person',
+      name: AUTHOR.name,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+  };
+}
+
 export function homeSchema(site: URL | string, description: string): JsonLd {
   const url = canonicalUrl(site, '/');
 

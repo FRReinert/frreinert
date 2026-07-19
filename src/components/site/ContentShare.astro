@@ -14,7 +14,7 @@ const btnClass =
   'inline-flex items-center gap-2 border border-line px-3 py-2 text-[0.65rem] uppercase tracking-[0.1em] text-ink-soft transition hover:border-ink/40 hover:bg-paper-tint hover:text-ink';
 ---
 
-<nav class="mb-10 max-w-3xl" data-pub-share aria-label="Compartilhar publicação">
+<nav class="mb-10 max-w-3xl" data-content-share aria-label="Compartilhar">
   <p class="text-[0.65rem] uppercase tracking-[0.12em] text-muted">Compartilhar</p>
   <ul class="mt-3 flex flex-wrap gap-2">
     <li>
@@ -71,7 +71,7 @@ const btnClass =
         data-share-copy
         data-share-url={url}
         data-share-feedback="Link copiado"
-        aria-label="Copiar link da publicação"
+        aria-label="Copiar link"
       >
         <svg
           class="h-3.5 w-3.5 shrink-0"
@@ -122,7 +122,7 @@ const btnClass =
 
 <script>
   (function () {
-    const root = document.querySelector('[data-pub-share]');
+    const root = document.querySelector('[data-content-share]');
     if (!root) return;
 
     async function copyText(text: string) {

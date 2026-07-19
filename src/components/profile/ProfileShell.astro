@@ -1,0 +1,26 @@
+---
+import ProfileHeader from './ProfileHeader.astro';
+import ProfileNav from './ProfileNav.astro';
+import type { ProfileSection } from '../../lib/site/profile';
+import { PROFILE_BIO } from '../../lib/site/profile';
+
+interface Props {
+  active?: ProfileSection;
+  bio?: string;
+  heading?: string;
+}
+
+const { active, bio = PROFILE_BIO, heading } = Astro.props;
+---
+
+<div class="mx-auto w-full max-w-[935px]">
+  <ProfileHeader bio={bio} />
+  <ProfileNav active={active} />
+
+  <div class="mt-6">
+    {heading ? (
+      <h2 class="mb-4 font-display text-2xl tracking-tight text-ink md:text-3xl">{heading}</h2>
+    ) : null}
+    <slot />
+  </div>
+</div>

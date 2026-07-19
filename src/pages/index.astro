@@ -1,60 +1,18 @@
 ---
-import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
-import { assetUrl, withBase } from '../lib/media/paths';
+import ProfileShell from '../components/profile/ProfileShell.astro';
+import ContentGrid from '../components/profile/ContentGrid.astro';
+import { getAllFeedItems } from '../lib/content/feed-items';
+import { PROFILE_BIO } from '../lib/site/profile';
+import { SECTION_META } from '../lib/site/sections';
 import { homeSchema } from '../lib/site/seo';
 
-const publicacoes = (await getCollection('publicacoes')).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
-);
-
-const recent = publicacoes.slice(0, 6);
-const intro =
-  'Página pessoal — sem algoritmo, sem viralizar, sem obsessão por métricas. Aqui conto histórias com fotografia, filmagem amadora e humor duvidoso.';
-const jsonLd = Astro.site ? homeSchema(Astro.site, intro) : undefined;
+const items = await getAllFeedItems();
+const jsonLd = Astro.site ? homeSchema(Astro.site, PROFILE_BIO) : undefined;
 ---
 
-<Layout title="Fabricio Roberto Reinert" description={intro} jsonLd={jsonLd}>
-  <header class="mb-14 max-w-2xl">
-    <h1 class="sr-only">Fabricio Roberto Reinert</h1>
-    <p class="text-base leading-relaxed text-muted md:text-lg">{intro}</p>
-  </header>
-
-  {
-    recent.length === 0 ? (
-      <p class="text-muted">Ainda não há nenhuma publicação.</p>
-    ) : (
-      <>
-        <div class="mb-10 flex items-end justify-between gap-4">
-          <h2 class="font-display text-3xl tracking-tight text-ink md:text-4xl">Publicações</h2>
-          <a
-            href={withBase('publicacoes/')}
-            class="text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
-          >
-            Ver todas
-          </a>
-        </div>
-        <ul class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {recent.map((item) => (
-            <li>
-              <a href={withBase(`publicacoes/${item.id}/`)} class="group block">
-                <div class="thumb-zoom mb-4">
-                  <img
-                    src={assetUrl(item.data.cover)}
-                    alt={item.data.title}
-                    class="aspect-[3/4] w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <h3 class="font-display text-xl tracking-tight text-ink transition group-hover:text-ink-soft">
-                  {item.data.title}
-                </h3>
-                <p class="mt-1 text-sm text-muted">{item.data.description}</p>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </>
-    )
-  }
+<Layout title="Fabricio Roberto Reinert" description={PROFILE_BIO} jsonLd={jsonLd}>
+  <ProfileShell active="inicio" heading={SECTION_META.inicio.title}>
+    <ContentGrid items={items} showBadges showTitles />
+  </ProfileShell>
 </Layout>

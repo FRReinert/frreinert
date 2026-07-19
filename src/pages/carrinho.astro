@@ -1,47 +1,48 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ProfileShell from '../components/profile/ProfileShell.astro';
 import { withBase } from '../lib/media/paths';
+import { SECTION_META } from '../lib/site/sections';
 ---
 
 <Layout title="Carrinho | Fabricio Roberto Reinert" description="Seu carrinho de fotos" noindex>
-  <header class="mb-10 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Carrinho</h1>
-    <p class="mt-4 text-muted">Revise as fotos e siga para o checkout.</p>
-  </header>
+  <ProfileShell active="carrinho" heading={SECTION_META.carrinho.title}>
+    <p class="mb-8 text-sm text-muted">Revise as fotos e siga para o checkout.</p>
 
-  <div data-cart-empty class="hidden text-muted">
-    <p>Seu carrinho está vazio.</p>
-    <a
-      href={withBase('eventos/')}
-      class="mt-6 inline-block text-xs uppercase tracking-[0.12em] text-link underline-offset-4 hover:underline"
-    >
-      Ver eventos
-    </a>
-  </div>
+    <div data-cart-empty class="hidden text-muted">
+      <p>Seu carrinho está vazio.</p>
+      <a
+        href={withBase('eventos/')}
+        class="mt-6 inline-block text-xs uppercase tracking-[0.12em] text-link underline-offset-4 hover:underline"
+      >
+        Ver eventos
+      </a>
+    </div>
 
-  <div data-cart-filled class="hidden">
-    <ul data-cart-list class="divide-y divide-line border-y border-line"></ul>
-    <div class="mt-8 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-      <p class="text-lg">
-        Total: <span data-cart-total class="font-display text-2xl tracking-tight">R$&nbsp;0,00</span>
-      </p>
-      <div class="flex flex-wrap gap-4">
-        <button
-          type="button"
-          data-cart-clear
-          class="border border-line px-5 py-3 text-xs uppercase tracking-[0.12em] text-muted transition hover:border-ink/40 hover:text-ink"
-        >
-          Limpar carrinho
-        </button>
-        <a
-          href={withBase('checkout/')}
-          class="border border-ink/25 px-6 py-3 text-xs uppercase tracking-[0.14em] text-ink transition hover:border-ink hover:bg-paper-tint"
-        >
-          Ir para checkout
-        </a>
+    <div data-cart-filled class="hidden">
+      <ul data-cart-list class="divide-y divide-line border-y border-line"></ul>
+      <div class="mt-8 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+        <p class="text-lg">
+          Total: <span data-cart-total class="font-display text-2xl tracking-tight">R$&nbsp;0,00</span>
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <button
+            type="button"
+            data-cart-clear
+            class="border border-line px-5 py-3 text-xs uppercase tracking-[0.12em] text-muted transition hover:border-ink/40 hover:text-ink"
+          >
+            Limpar carrinho
+          </button>
+          <a
+            href={withBase('checkout/')}
+            class="border border-ink/25 px-6 py-3 text-xs uppercase tracking-[0.14em] text-ink transition hover:border-ink hover:bg-paper-tint"
+          >
+            Ir para checkout
+          </a>
+        </div>
       </div>
     </div>
-  </div>
+  </ProfileShell>
 </Layout>
 
 <script>

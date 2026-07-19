@@ -1,9 +1,12 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+import ProfileShell from '../../components/profile/ProfileShell.astro';
+import SectionBackLink from '../../components/profile/SectionBackLink.astro';
 import AddToCartButton from '../../components/commerce/AddToCartButton.astro';
 import ScreenshotGuard from '../../components/commerce/ScreenshotGuard.astro';
-import { assetUrl, withBase } from '../../lib/media/paths';
+import { assetUrl } from '../../lib/media/paths';
+import { SECTION_META } from '../../lib/site/sections';
 import { eventSchema } from '../../lib/site/seo';
 import { formatBRL } from '../../lib/commerce/cart';
 
@@ -28,12 +31,10 @@ const jsonLd = Astro.site ? eventSchema(item, Astro.site, coverImage) : undefine
   type="article"
   jsonLd={jsonLd}
 >
-  <article>
-    <p class="mb-8 text-xs uppercase tracking-[0.2em] text-muted">
-      <a href={withBase('eventos/')} class="transition hover:text-ink">← Eventos</a>
-    </p>
-
-    <figure class="mb-10">
+  <ProfileShell active="eventos">
+    <article>
+      <SectionBackLink href={SECTION_META.eventos.href} label={SECTION_META.eventos.backLabel} />
+      <figure class="mb-10">
       <img
         src={assetUrl(item.data.cover)}
         alt={item.data.title}
@@ -98,6 +99,7 @@ const jsonLd = Astro.site ? eventSchema(item, Astro.site, coverImage) : undefine
         )
       }
     </section>
-  </article>
+    </article>
+  </ProfileShell>
   <ScreenshotGuard />
 </Layout>

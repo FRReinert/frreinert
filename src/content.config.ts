@@ -48,4 +48,15 @@ const eventos = defineCollection({
   }),
 });
 
-export const collections = { publicacoes, eventos };
+const moments = defineCollection({
+  loader: glob({ base: './src/content/moments', pattern: '**/*.{md,mdx}' }),
+  schema: z.object({
+    date: z.coerce.date(),
+    image: z.string(),
+    text: z.string(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+  }),
+});
+
+export const collections = { publicacoes, eventos, moments };

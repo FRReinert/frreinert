@@ -1,48 +1,15 @@
 ---
-import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import { assetUrl, withBase } from '../../lib/media/paths';
+import ProfileShell from '../../components/profile/ProfileShell.astro';
+import ContentGrid from '../../components/profile/ContentGrid.astro';
+import { getFeedItemsByKind } from '../../lib/content/feed-items';
+import { SECTION_META } from '../../lib/site/sections';
 
-const publicacoes = (await getCollection('publicacoes')).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
-);
+const items = await getFeedItemsByKind('publicacao');
 ---
 
 <Layout title="Publicações | Fabricio Roberto Reinert" description="Todas as publicações">
-  <header class="mb-14 max-w-2xl">
-    <h1 class="font-display text-4xl tracking-tight md:text-5xl">Publicações</h1>
-  </header>
-
-  {
-    publicacoes.length === 0 ? (
-      <p class="text-muted">Ainda não há nenhuma publicação.</p>
-    ) : (
-      <ul class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-        {publicacoes.map((item) => (
-          <li>
-            <a href={withBase(`publicacoes/${item.id}/`)} class="group block">
-              <div class="thumb-zoom mb-4">
-                <img
-                  src={assetUrl(item.data.cover)}
-                  alt={item.data.title}
-                  class="aspect-[3/4] w-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <time
-                class="text-[0.65rem] uppercase tracking-[0.2em] text-muted"
-                datetime={item.data.date.toISOString()}
-              >
-                {item.data.date.toLocaleDateString('pt-BR')}
-              </time>
-              <h2 class="mt-2 font-display text-2xl tracking-tight text-ink transition group-hover:text-ink-soft">
-                {item.data.title}
-              </h2>
-              <p class="mt-1 text-sm text-muted">{item.data.description}</p>
-            </a>
-          </li>
-        ))}
-      </ul>
-    )
-  }
+  <ProfileShell active="publicacoes" heading={SECTION_META.publicacoes.title}>
+    <ContentGrid items={items} showTitles />
+  </ProfileShell>
 </Layout>

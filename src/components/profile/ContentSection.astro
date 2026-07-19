@@ -1,0 +1,47 @@
+---
+import type { FeedItem } from '../../lib/content/feed-items';
+import ContentGrid from './ContentGrid.astro';
+
+interface Props {
+  title: string;
+  href?: string;
+  linkLabel?: string;
+  items: FeedItem[];
+  showBadges?: boolean;
+  emptyMessage?: string;
+}
+
+const {
+  title,
+  href,
+  linkLabel = 'Ver todos',
+  items,
+  showBadges = false,
+  emptyMessage,
+} = Astro.props;
+
+const hideSection = items.length === 0 && !emptyMessage;
+---
+
+{
+  !hideSection && (
+    <section class="mt-14">
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <h2 class="font-display text-2xl tracking-tight text-ink md:text-3xl">{title}</h2>
+        {href && items.length > 0 ? (
+          <a
+            href={href}
+            class="shrink-0 text-xs uppercase tracking-[0.12em] text-muted transition hover:text-ink"
+          >
+            {linkLabel}
+          </a>
+        ) : null}
+      </div>
+      {items.length === 0 && emptyMessage ? (
+        <p class="text-sm text-muted">{emptyMessage}</p>
+      ) : (
+        <ContentGrid items={items} showBadges={showBadges} />
+      )}
+    </section>
+  )
+}

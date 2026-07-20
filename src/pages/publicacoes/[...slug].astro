@@ -6,6 +6,7 @@ import SectionBackLink from '../../components/profile/SectionBackLink.astro';
 import PublicationMedia from '../../components/publications/PublicationMedia.astro';
 import PublicationAudio from '../../components/publications/PublicationAudio.astro';
 import ContentShare from '../../components/site/ContentShare.astro';
+import GoogleMapsEmbed from '../../components/site/GoogleMapsEmbed.astro';
 import PostComments from '../../components/publications/PostComments.astro';
 import { assetUrl } from '../../lib/media/paths';
 import { SECTION_META } from '../../lib/site/sections';
@@ -21,7 +22,11 @@ export async function getStaticPaths() {
 }
 
 const { item } = Astro.props;
-const { Content } = await render(item);
+const { Content } = await render(item, {
+  components: {
+    GoogleMapsEmbed,
+  },
+});
 const hasAudio = Boolean(
   item.data.audio_file?.trim() || parseSpotifyUrl(item.data.spotify_url),
 );

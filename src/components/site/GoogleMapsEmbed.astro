@@ -1,0 +1,55 @@
+---
+import { resolveGoogleMapsEmbed } from '../../lib/media/google-maps';
+
+interface Props {
+  /** Link compartilhado (maps.app.goo.gl, google.com/maps/place/…) ou URL de embed */
+  url: string;
+  /** Rótulo do iframe; se omitido, usa o nome do lugar quando disponível */
+  title?: string;
+  /** Altura do mapa em px */
+  height?: number;
+  /** Zoom opcional (default: extraído do link ou 15) */
+  zoom?: number;
+}
+
+const { url, title, height = 360, zoom } = Astro.props;
+const map = await resolveGoogleMapsEmbed(url, { zoom });
+const iframeTitle = title?.trim() || map?.title || 'Mapa do Google Maps';
+---
+
+{
+  map ? (
+    <figure class="my-10">
+      <div
+        class="aspect-[4/3] w-full overflow-hidden border border-line bg-paper-tint sm:aspect-video"
+        style={`max-height: ${height}px`}
+      >
+        <iframe
+          class="h-full w-full"
+          src={map.embedSrc}
+          title={iframeTitle}
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+        />
+      </div>
+      <figcaption class="mt-3 text-center">
+        <a
+          href={map.href}
+          class="text-[0.65rem] uppercase tracking-[0.12em] text-muted transition hover:text-ink"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Abrir no Google Maps
+        </a>
+      </figcaption>
+    </figure>
+  ) : (
+    <p class="my-10 rounded border border-line bg-paper-tint px-4 py-3 text-sm text-muted">
+      Não foi possível incorporar este mapa.{' '}
+      <a href={url} class="text-link underline" target="_blank" rel="noopener noreferrer">
+        Abrir link no Google Maps
+      </a>
+    </p>
+  )
+}
